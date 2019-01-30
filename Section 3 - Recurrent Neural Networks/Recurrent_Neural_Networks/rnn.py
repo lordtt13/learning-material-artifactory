@@ -62,10 +62,10 @@ regressor.add(Dropout(0.2))
 regressor.add(Dense(units = 1))
 
 # Compiling the RNN
-regressor.compile(optimizer = 'adam', loss = 'mean_squared_error')
+regressor.compile(optimizer = 'nadam', loss = 'mean_squared_error')
 
 # Fitting the RNN to the Training set
-regressor.fit(X_train, y_train, epochs = 100, batch_size = 32)
+regressor.fit(X_train, y_train, epochs = 10, batch_size = 1)
 
 
 

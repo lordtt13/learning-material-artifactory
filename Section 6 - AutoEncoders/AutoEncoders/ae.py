@@ -79,6 +79,7 @@ for epoch in range(1, nb_epoch + 1):
             train_loss += np.sqrt(loss.item()*mean_corrector)
             s += 1.
             optimizer.step()
+            print (output)
     print('epoch: '+str(epoch)+' loss: '+str(train_loss/s))
 
 # Testing the SAE
