@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep  6 00:37:18 2019
+Created on Fri Sep  6 00:44:02 2019
 
 @author: tanma
 """
@@ -44,19 +44,37 @@ import keras
 from keras.models import Sequential
 from keras.layers import Dense
 
+from keras.layers import Layer
+import keras.backend as K
+
+class Round(Layer):
+
+    def __init__(self, **kwargs):
+        super(Round, self).__init__(**kwargs)
+
+    def get_output(self, train=False):
+        X = self.get_input(train)
+        return K.round(X)
+
+    def get_config(self):
+        config = {"name": self.__class__.__name__}
+        base_config = super(Round, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+keras.backend.set_floatx('float16')
 
 # Initialising the ANN
 classifier = Sequential()
 
 # Adding the input layer and the first hidden layer
-classifier.add(Dense(units = 6, init = 'uniform', activation = 'relu', input_dim = 11))
-
+classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu', input_dim = 11))
+classifier.add(Round())
 # Adding the second hidden layer
-classifier.add(Dense(units = 6, init = 'uniform', activation = 'relu'))
-
+classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu'))
+classifier.add(Round())
 # Adding the output layer
-classifier.add(Dense(units = 1, init = 'uniform', activation = 'sigmoid'))
-
+classifier.add(Dense(output_dim = 1, init = 'uniform', activation = 'sigmoid'))
+classifier.add(Round())
 # Compiling the ANN
 classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 
