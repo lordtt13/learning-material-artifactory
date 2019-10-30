@@ -8,5 +8,6 @@
 out
 gen
 
-SMSSpamCollection
-readme
+*.txt
+./Naive Bayes/SMSSpamCollection
+./Naive Bayes/readme
