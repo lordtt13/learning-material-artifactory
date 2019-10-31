@@ -11,3 +11,4 @@ gen
 *.txt
 ./Naive Bayes/SMSSpamCollection
 ./Naive Bayes/readme
+*__pycache__
