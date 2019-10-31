@@ -38,3 +38,39 @@ def pair_counts(sequences_A, sequences_B):
         if word not in d[tag].keys(): d[tag][word] = 0
         d[tag][word] +=1
     return d
+# Calculate C(t_i, w_i)
+# Unwrap the data stream, split it to two lists through zip, reverse the order, split again
+emission_counts = pair_counts(*list(zip(*data.training_set.stream()))[::-1])
+
+assert len(emission_counts) == 12, \
+       "Uh oh. There should be 12 tags in your dictionary."
+assert max(emission_counts["NOUN"], key=emission_counts["NOUN"].get) == 'time', \
+       "Hmmm...'time' is expected to be the most common NOUN."
+
+# Create a lookup table mfc_table where mfc_table[word] contains the tag label most frequently assigned to that word
+
+FakeState = namedtuple("FakeState", "name")
+
+class MFCTagger:
+    missing = FakeState(name="<MISSING>")
+    
+    def __init__(self, table):
+        self.table = defaultdict(lambda: MFCTagger.missing)
+        self.table.update({word: FakeState(name=tag) for word, tag in table.items()})
+        
+    def viterbi(self, seq):
+        """This method simplifies predictions by matching the Pomegranate viterbi() interface"""
+        return 0., list(enumerate(["<start>"] + [self.table[w] for w in seq] + ["<end>"]))
+
+# Unwrap the data stream, split it to two lists through zip, {word: {tag : count}}
+word_counts = pair_counts(*zip(*data.training_set.stream()))
+
+# Using same pattern as the emission test for time
+mfc_table = {w: max(word_counts[w], key=word_counts[w].get) for w in word_counts.keys()}
+
+mfc_model = MFCTagger(mfc_table) # Create a Most Frequent Class tagger instance
+
+assert len(mfc_table) == len(data.training_set.vocab), ""
+assert all(k in data.training_set.vocab for k in mfc_table.keys()), ""
+assert sum(int(k not in mfc_table) for k in data.testing_set.vocab) == 5521, ""
+
