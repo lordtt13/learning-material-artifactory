@@ -260,3 +260,5 @@ print("testing accuracy basic hmm model: {:.2f}%".format(100 * hmm_testing_acc))
 
 assert hmm_training_acc > 0.97, "Uh oh. Your HMM accuracy on the training set doesn't look right."
 assert hmm_training_acc > 0.955, "Uh oh. Your HMM accuracy on the training set doesn't look right."
+
+show_model(basic_model, figsize=(5, 5), filename="basic_model.png", overwrite=True, show_ends=False)
