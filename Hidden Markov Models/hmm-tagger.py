@@ -120,3 +120,52 @@ print("testing accuracy mfc_model: {:.2f}%".format(100 * mfc_testing_acc))
 
 assert mfc_training_acc >= 0.955, "Uh oh. Your MFC accuracy on the training set doesn't look right."
 assert mfc_testing_acc >= 0.925, "Uh oh. Your MFC accuracy on the testing set doesn't look right."
+
+def unigram_counts(sequences):
+    """Return a dictionary keyed to each unique value in the input sequence list that
+    counts the number of occurrences of the value in the sequences list. The sequences
+    collection should be a 2-dimensional array.
+    
+    For example, if the tag NOUN appears 275558 times over all the input sequences,
+    then you should return a dictionary such that your_unigram_counts[NOUN] == 275558.
+    """
+    # TODO: Finish this function!
+    return Counter(list(sequences)[1])
+
+# TODO: call unigram_counts with a list of tag sequences from the training set
+# Send a two-dimensional array before (don't unwrap as before)
+tag_unigrams = unigram_counts(zip(*data.training_set.stream()))
+
+assert set(tag_unigrams.keys()) == data.training_set.tagset, \
+       "Uh oh. It looks like your tag counts doesn't include all the tags!"
+assert min(tag_unigrams, key=tag_unigrams.get) == 'X', \
+       "Hmmm...'X' is expected to be the least common class"
+assert max(tag_unigrams, key=tag_unigrams.get) == 'NOUN', \
+       "Hmmm...'NOUN' is expected to be the most common class"
+       
+def bigram_counts(sequences):
+    """Return a dictionary keyed to each unique PAIR of values in the input sequences
+    list that counts the number of occurrences of pair in the sequences list. The input
+    should be a 2-dimensional array.
+    
+    For example, if the pair of tags (NOUN, VERB) appear 61582 times, then you should
+    return a dictionary such that your_bigram_counts[(NOUN, VERB)] == 61582
+    """
+    d = {}
+    for seq in sequences:
+        # Stop before the last word
+        for i in range(0, len(seq)-1):
+            if (seq[i], seq[i+1]) not in d.keys(): d[(seq[i], seq[i+1])] = 0 
+            d[(seq[i], seq[i+1])] +=1
+
+    return d
+
+# TODO: call bigram_counts with a list of tag sequences from the training set
+tag_bigrams = bigram_counts(data.training_set.Y)
+
+assert len(tag_bigrams) == 144, \
+       "Uh oh. There should be 144 pairs of bigrams (12 tags x 12 tags)"
+assert min(tag_bigrams, key=tag_bigrams.get) in [('X', 'NUM'), ('PRON', 'X')], \
+       "Hmmm...The least common bigram should be one of ('X', 'NUM') or ('PRON', 'X')."
+assert max(tag_bigrams, key=tag_bigrams.get) in [('DET', 'NOUN')], \
+       "Hmmm...('DET', 'NOUN') is expected to be the most common bigram."
