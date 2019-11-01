@@ -216,3 +216,39 @@ assert len(tag_ends) == 12, "Uh oh. There should be 12 tags in your dictionary."
 assert min(tag_ends, key=tag_ends.get) in ['X', 'CONJ'], "Hmmm...'X' or 'CONJ' should be the least common ending bigram."
 assert max(tag_ends, key=tag_ends.get) == '.', "Hmmm...'.' is expected to be the most common ending bigram."
 
+basic_model = HiddenMarkovModel(name="base-hmm-tagger")
+
+# Create states with emission probability distributions P(word | tag) and add to the model
+
+s = {}
+states = []
+for tag in emission_counts.keys():
+    tag_count = tag_unigrams[tag]
+    p = {}
+    for word in emission_counts[tag]:
+        p[word] = emission_counts[tag][word]/tag_count # P(word | tag) = C(tag | word)/C(tag), C = count
+    emission_p = DiscreteDistribution(p)
+    state = State(emission_p,name=""+tag)
+    basic_model.add_state(state)
+    s[tag] = state 
+
+# TODO: add edges between states for the observed transition frequencies P(tag_i | tag_i-1)
+
+# Start & End Transitions
+# Start - Number of senteces starting with tag over total number of sentences
+# End - Number of senteces ending with tag over count of tag appereances
+for tag in tag_starts:
+    basic_model.add_transition(basic_model.start, s[tag], tag_starts[tag]/len(data.training_set.Y))
+    basic_model.add_transition(s[tag], basic_model.end, tag_ends[tag]/tag_unigrams[tag])
+    
+for (tag1, tag2) in tag_bigrams:
+    basic_model.add_transition(s[tag1], s[tag2], tag_bigrams[(tag1,tag2)]/tag_unigrams[tag1])
+    
+basic_model.bake()
+
+assert all(tag in set(s.name for s in basic_model.states) for tag in data.training_set.tagset), \
+       "Every state in your network should use the name of the associated tag, which must be one of the training set tags."
+assert basic_model.edge_count() == 168, \
+       ("Your network should have an edge from the start node to each state, one edge between every " +
+        "pair of tags (states), and an edge from each state to the end node.")
+       
