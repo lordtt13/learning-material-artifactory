@@ -238,3 +238,4 @@ def classify_gboost(X_train, X_test, y_train, y_test):
 
 clf2 = classify_gboost(features_train, features_test, labels_train, labels_test)
 
+print(clf2.cv_results_)
