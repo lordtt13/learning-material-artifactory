@@ -213,3 +213,28 @@ print("[{}] Accuracy: train = {}, test = {}".format(
 
 # Ensemble Model
 
+n_estimators = 100
+
+def classify_gboost(X_train, X_test, y_train, y_test):        
+    # Initialize classifier
+    clf = GradientBoostingClassifier(n_estimators=n_estimators, learning_rate=1.0, max_depth=1, random_state=0)
+
+    # Classify the data using GradientBoostingClassifier
+    clf.fit(X_train, y_train)
+    print("accuracy of first model is: {}".format(clf.score(X_test, y_test)))
+    
+    # Perform hyperparameter tuning / model selection
+    parameters = {'n_estimators':(10,50,100,250,500,1000)}
+    clf = GridSearchCV(clf, parameters, cv=5)
+    clf.fit(X_train, y_train)
+    
+    # Print final training & test accuracy
+    print("[GradientBoostingClassifier] Accuracy: train = {}, test = {}".format(
+        clf.score(X_train, y_train),
+        clf.score(X_test, y_test)))
+    # Return best classifier model
+    return clf
+
+
+clf2 = classify_gboost(features_train, features_test, labels_train, labels_test)
+
