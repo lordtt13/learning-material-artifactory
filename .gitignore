@@ -12,3 +12,4 @@ gen
 ./Naive Bayes/SMSSpamCollection
 ./Naive Bayes/readme
 *__pycache__
+*.csv
