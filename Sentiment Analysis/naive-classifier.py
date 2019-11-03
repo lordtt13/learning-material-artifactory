@@ -5,21 +5,20 @@ Created on Sun Nov  3 21:59:34 2019
 @author: tanma
 """
 
-import os
-import glob
+import os, glob, re, nltk, random, pickle
+import pandas as pd, numpy as np
 from wordcloud import WordCloud, STOPWORDS
 import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
-import pandas as pd
 from bs4 import BeautifulSoup 
-import re
-import nltk
 from nltk.corpus import stopwords 
 from nltk.stem.porter import *
-import pickle
-import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.externals import joblib # joblib is an enhanced version of pickle that is more efficient for storing NumPy arrays
+import sklearn.preprocessing as pr
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import GridSearchCV
 
 
 nltk.download("stopwords")   
@@ -150,4 +149,67 @@ def preprocess_data(data_train, data_test, labels_train, labels_test,
 # Preprocess data
 words_train, words_test, labels_train, labels_test = preprocess_data(
         data_train, data_test, labels_train, labels_test)
+
+def extract_BoW_features(words_train, words_test, vocabulary_size=5000,
+                         cache_dir=cache_dir, cache_file="bow_features.pkl"):
+    """Extract Bag-of-Words for a given set of documents, already preprocessed into words."""
+    
+    # If cache_file is not None, try to read from it first
+    cache_data = None
+    if cache_file is not None:
+        try:
+            with open(os.path.join(cache_dir, cache_file), "rb") as f:
+                cache_data = joblib.load(f)
+            print("Read features from cache file:", cache_file)
+        except:
+            pass  # unable to read from cache, but that's okay
+    
+    # If cache is missing, then do the heavy lifting
+    if cache_data is None:
+        # TODO: Fit a vectorizer to training documents and use it to transform them
+        # NOTE: Training documents have already been preprocessed and tokenized into words;
+        #       pass in dummy functions to skip those steps, e.g. preprocessor=lambda x: x
+        vectorizer = CountVectorizer(max_features=vocabulary_size,
+                preprocessor=lambda x: x, tokenizer=lambda x: x) 
+        features_train = vectorizer.fit_transform(words_train).toarray()
+
+        # TODO: Apply the same vectorizer to transform the test documents (ignore unknown words)
+        features_test = vectorizer.transform(words_test).toarray()
+        
+        # NOTE: Remember to convert the features using .toarray() for a compact representation
+        
+        # Write to cache file for future runs (store vocabulary as well)
+        if cache_file is not None:
+            vocabulary = vectorizer.vocabulary_
+            cache_data = dict(features_train=features_train, features_test=features_test,
+                             vocabulary=vocabulary)
+            with open(os.path.join(cache_dir, cache_file), "wb") as f:
+                joblib.dump(cache_data, f)
+            print("Wrote features to cache file:", cache_file)
+    else:
+        # Unpack data loaded from cache file
+        features_train, features_test, vocabulary = (cache_data['features_train'],
+                cache_data['features_test'], cache_data['vocabulary'])
+    
+    # Return both the extracted features as well as the vocabulary
+    return features_train, features_test, vocabulary
+
+# Extract Bag of Words features for both training and test datasets
+features_train, features_test, vocabulary = extract_BoW_features(words_train, words_test)    
+
+# Normalize BoW features in training and test set
+features_train = pr.normalize(features_train)
+features_test = pr.normalize(features_test)
+
+# Naive Bayes Model
+clf1 = GaussianNB()
+clf1.fit(features_train,labels_train)
+
+# Calculate the mean accuracy score on training and test sets
+print("[{}] Accuracy: train = {}, test = {}".format(
+        clf1.__class__.__name__,
+        clf1.score(features_train, labels_train),
+        clf1.score(features_test, labels_test)))
+
+# Ensemble Model
 
