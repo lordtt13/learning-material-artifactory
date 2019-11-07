@@ -1,0 +1,100 @@
+org 0000h
+ljmp 0100h
+org 0003h
+mov a,#38h
+acall cmnwrt
+acall delay
+mov a,#0eh
+acall cmnwrt
+acall delay
+mov a,#01h
+acall cmnwrt
+acall delay
+mov a,#80h
+acall cmnwrt
+acall delay
+mov a,#'1'
+acall datwrt
+acall delay
+mov a,#'7'
+acall datwrt
+acall delay
+mov a,#'B'
+acall datwrt
+acall delay
+mov a,#'E'
+acall datwrt
+acall delay
+mov a,#'E'
+acall datwrt
+acall delay
+mov a,#'0'
+acall datwrt
+acall delay
+mov a,#'0'
+acall datwrt
+acall delay
+mov a,#'7'
+acall datwrt
+acall delay
+mov a,#'1'
+acall datwrt
+acall delay
+again1:sjmp again1
+reti
+org 0100h
+mov a,#38h
+acall cmnwrt
+acall delay
+mov a,#0eh
+acall cmnwrt
+acall delay
+mov a,#01h
+acall cmnwrt
+acall delay
+mov a,#80h
+acall cmnwrt
+acall delay
+mov a,#'A'
+acall datwrt
+acall delay
+mov a,#'B'
+acall datwrt
+acall delay
+mov a,#'H'
+acall datwrt
+acall delay
+mov a,#'I'
+acall datwrt
+acall delay
+mov a,#'J'
+acall datwrt
+acall delay
+mov a,#'A'
+acall datwrt
+acall delay
+mov a,#'Y'
+acall datwrt
+acall delay
+mov ie,#85h
+again:sjmp again
+cmnwrt: mov p1,a
+clr p0.2
+clr p0.1
+setb p0.0
+clr p0.0
+ret
+datwrt: mov p1,a
+setb p0.2
+clr p0.1
+setb p0.0
+clr p0.0
+ret
+delay: mov r3,#0ffh
+mov r4,#0ffh
+mov r5,#055h
+here:djnz r5,here
+here1:djnz r4,here1
+here2: djnz r3,here2
+ret
+end
