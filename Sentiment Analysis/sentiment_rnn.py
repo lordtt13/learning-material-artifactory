@@ -114,4 +114,54 @@ def get_batches(x, y, batch_size=100):
     for ii in range(0, len(x), batch_size):
         yield x[ii:ii+batch_size], y[ii:ii+batch_size]
         
+# Training
+epochs = 10
 
+with graph.as_default():
+    saver = tf.train.Saver()
+
+with tf.Session(graph=graph) as sess:
+    sess.run(tf.global_variables_initializer())
+    iteration = 1
+    for e in range(epochs):
+        state = sess.run(initial_state)
+        
+        for ii, (x, y) in enumerate(get_batches(train_x, train_y, batch_size), 1):
+            feed = {inputs_: x,
+                    labels_: y[:, None],
+                    keep_prob: 0.5,
+                    initial_state: state}
+            loss, state, _ = sess.run([cost, final_state, optimizer], feed_dict=feed)
+            
+            if iteration%5==0:
+                print("Epoch: {}/{}".format(e, epochs),
+                      "Iteration: {}".format(iteration),
+                      "Train loss: {:.3f}".format(loss))
+
+            if iteration%25==0:
+                val_acc = []
+                val_state = sess.run(cell.zero_state(batch_size, tf.float32))
+                for x, y in get_batches(val_x, val_y, batch_size):
+                    feed = {inputs_: x,
+                            labels_: y[:, None],
+                            keep_prob: 1,
+                            initial_state: val_state}
+                    batch_acc, val_state = sess.run([accuracy, final_state], feed_dict=feed)
+                    val_acc.append(batch_acc)
+                print("Val acc: {:.3f}".format(np.mean(val_acc)))
+            iteration +=1
+    saver.save(sess, "checkpoints/sentiment.ckpt")
+    
+# Testing
+test_acc = []
+with tf.Session(graph=graph) as sess:
+    saver.restore(sess, tf.train.latest_checkpoint('checkpoints'))
+    test_state = sess.run(cell.zero_state(batch_size, tf.float32))
+    for ii, (x, y) in enumerate(get_batches(test_x, test_y, batch_size), 1):
+        feed = {inputs_: x,
+                labels_: y[:, None],
+                keep_prob: 1,
+                initial_state: test_state}
+        batch_acc, test_state = sess.run([accuracy, final_state], feed_dict=feed)
+        test_acc.append(batch_acc)
+    print("Test accuracy: {:.3f}".format(np.mean(test_acc)))
