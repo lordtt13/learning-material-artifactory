@@ -56,3 +56,62 @@ train_y, val_y = labels[:split_idx], labels[split_idx:]
 test_idx = int(len(val_x)*0.5)
 val_x, test_x = val_x[:test_idx], val_x[test_idx:]
 val_y, test_y = val_y[:test_idx], val_y[test_idx:]
+
+# TF Graph building
+lstm_size = 256
+lstm_layers = 1
+batch_size = 500
+learning_rate = 0.001
+
+n_words = len(vocab_to_int) + 1 # Adding 1 because we use 0's for padding, dictionary started at 1
+
+# Create the graph object
+graph = tf.Graph()
+# Add nodes to the graph
+with graph.as_default():
+    inputs_ = tf.placeholder(tf.int32, [None, None], name='inputs')
+    labels_ = tf.placeholder(tf.int32, [None, None], name='labels')
+    keep_prob = tf.placeholder(tf.float32, name='keep_prob')
+    
+# Size of the embedding vectors (number of units in the embedding layer)
+embed_size = 300 
+
+with graph.as_default():
+    embedding = tf.Variable(tf.random_uniform((n_words, embed_size), -1, 1))
+    embed = tf.nn.embedding_lookup(embedding, inputs_)
+    
+with graph.as_default():
+    # Your basic LSTM cell
+    lstm = tf.contrib.rnn.BasicLSTMCell(lstm_size)
+    
+    # Add dropout to the cell
+    drop = tf.contrib.rnn.DropoutWrapper(lstm, output_keep_prob=keep_prob)
+    
+    # Stack up multiple LSTM layers, for deep learning
+    cell = tf.contrib.rnn.MultiRNNCell([drop] * lstm_layers)
+    
+    # Getting an initial state of all zeros
+    initial_state = cell.zero_state(batch_size, tf.float32)
+    
+with graph.as_default():
+    outputs, final_state = tf.nn.dynamic_rnn(cell, embed,
+                                             initial_state=initial_state)
+    
+with graph.as_default():
+    predictions = tf.contrib.layers.fully_connected(outputs[:, -1], 1, activation_fn=tf.sigmoid)
+    cost = tf.losses.mean_squared_error(labels_, predictions)
+    
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
+    
+with graph.as_default():
+    correct_pred = tf.equal(tf.cast(tf.round(predictions), tf.int32), labels_)
+    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+    
+def get_batches(x, y, batch_size=100):
+    
+    n_batches = len(x)//batch_size
+    x, y = x[:n_batches*batch_size], y[:n_batches*batch_size]
+    for ii in range(0, len(x), batch_size):
+        yield x[ii:ii+batch_size], y[ii:ii+batch_size]
+        
+
