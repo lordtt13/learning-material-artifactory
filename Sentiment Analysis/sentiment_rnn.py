@@ -47,3 +47,12 @@ features = np.zeros((len(reviews_ints), seq_len), dtype=int)
 for i, row in enumerate(reviews_ints):
     features[i, -len(row):] = np.array(row)[:seq_len]
     
+# Training, Validation, Test
+split_frac = 0.8
+split_idx = int(len(features)*0.8)
+train_x, val_x = features[:split_idx], features[split_idx:]
+train_y, val_y = labels[:split_idx], labels[split_idx:]
+
+test_idx = int(len(val_x)*0.5)
+val_x, test_x = val_x[:test_idx], val_x[test_idx:]
+val_y, test_y = val_y[:test_idx], val_y[test_idx:]
