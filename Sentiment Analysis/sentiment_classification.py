@@ -803,6 +803,32 @@ class SentimentNetwork__:
             return "POSITIVE"
         else:
             return "NEGATIVE"
+        
+mlp = SentimentNetwork__(reviews[:-1000],labels[:-1000], learning_rate=0.1)
+mlp.train(reviews[:-1000],labels[:-1000])
+
+mlp.test(reviews[-1000:],labels[-1000:])
+
+hist, edges = np.histogram(list(map(lambda x:x[1],pos_neg_ratios.most_common())), density=True, bins=100, normed=True)
+
+p = figure(tools="pan,wheel_zoom,reset,save",
+           toolbar_location="above",
+           title="Word Positive/Negative Affinity Distribution")
+p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], line_color="#555555")
+show(p)
+
+frequency_frequency = Counter()
+
+for word, cnt in total_counts.most_common():
+    frequency_frequency[cnt] += 1
+    
+hist, edges = np.histogram(list(map(lambda x:x[1],frequency_frequency.most_common())), density=True, bins=100, normed=True)
+
+p = figure(tools="pan,wheel_zoom,reset,save",
+           toolbar_location="above",
+           title="The frequency distribution of the words in our corpus")
+p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], line_color="#555555")
+show(p)
 
 # First Run        
 mlp = SentimentNetwork__(reviews[:-1000],labels[:-1000],min_count=20,polarity_cutoff=0.05,learning_rate=0.01)
