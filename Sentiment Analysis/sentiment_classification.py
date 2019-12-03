@@ -814,3 +814,11 @@ mlp.test(reviews[-1000:],labels[-1000:])
 mlp_full = SentimentNetwork__(reviews[:-1000],labels[:-1000],min_count=0,polarity_cutoff=0,learning_rate=0.01)
 mlp_full.train(reviews[:-1000],labels[:-1000])
 
+def get_most_similar_words(focus = "horrible"):
+    most_similar = Counter()
+
+    for word in mlp_full.word2index.keys():
+        most_similar[word] = np.dot(mlp_full.weights_0_1[mlp_full.word2index[word]],mlp_full.weights_0_1[mlp_full.word2index[focus]])
+    
+    return most_similar.most_common()
+
