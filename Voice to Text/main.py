@@ -36,8 +36,8 @@ import _pickle as pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
 import re
-from collections import Counter
-import nltk
+from collections import Counter, defaultdict
+from nltk import trigrams
 from nltk.corpus import brown
 
 from data_generator import AudioGenerator, plot_raw_audio, plot_spectrogram_feature
@@ -682,3 +682,76 @@ print("True transcription:         ", label)
 print("Model raw prediction:       ", prediction)
 print("Spell corrected prediction: ", ' '.join(corrected_prediction))
 
+# Create a trigram language model, base on our training set corpus
+language_model = defaultdict(lambda: defaultdict(lambda: 0))
+ 
+for sentence in corpus_text:
+    for w1, w2, w3 in trigrams(sentence.lower().split(), pad_right=True, pad_left=True):
+        language_model[(w1, w2)][w3] += 1
+
+        
+# Transform the counts intoto probabilities
+for w1_w2 in language_model:
+    total_count = float(sum(language_model[w1_w2].values()))
+    for w3 in language_model[w1_w2]:
+        language_model[w1_w2][w3] /= total_count
+        
+        
+next_words = language_model["the", "two"]
+print('Debug : word candidates for ["the", "two"] sequence : ', next_words)
+
+corrected_prediction=[]
+
+predicted_words = prediction.lower().split()
+
+# Comment this code to avoid debug mode/unit test (need a prediction with more correct words, especially for the 2 first words...)
+print("\n\nDeeug : unit test" )
+label = "also a popular contrivance whereby love making may be suspended but not stopped during the picnic season"
+predicted_words=["also", "a", "popela", "contrivance", "whereby", "lof", "making", "may", "beses", "suspended", "but", "not", "stok", "during", "the", "picnic", "season"]
+
+print("Predicted_words=", predicted_words) 
+
+word1=""
+word2=""
+
+for i in range(len(predicted_words)):
+    # We assume the first word is correct
+    if i==0:
+        word1=predicted_words[i]
+        corrected_prediction.append(word1)
+    elif i==1:
+        # We also assume the second word is corrcet (TODO: check with a bigram model)
+        word2=predicted_words[i]
+        corrected_prediction.append(word2)
+    else :
+        new_word2=predicted_words[i]
+        # if current words is not in the corpus, check if a trigram prediction exist
+        if predicted_words[i] not in words_list and len(language_model[word1, word2].items())>0 and max(language_model[word1, word2].items(), key=lambda x: x[1])[0] is not None:
+            
+            # Replace with the word which has the highest probability to follows the previous 2 words
+            # TODO : check if test condition is ok + how to eventually break tie ?
+            corrected_word = max(language_model[word1, word2].items(), key=lambda x: x[1])
+            corrected_prediction.append(corrected_word[0])
+            #print("Debug : corrected_word: ", corrected_word)
+            print("correcting: ", predicted_words[i], "-> ", corrected_word[0])
+            new_word2=corrected_word[0]
+        else:
+            # else Keep the current predicted words
+            # TODO : maybe also compare if the current word exist in the corpus, check if its probability is higher than the language model prediction (if exist)
+            corrected_prediction.append(predicted_words[i])
+            
+        # update word1 and word2 for next iteration    
+        word1=word2
+        word2=new_word2
+    #print("Debug : word1=", word1, " word2=", word2," corrected_prediction=" , corrected_prediction)    
+            
+# Uncomment to remove debug/unit test    
+#print("True transcription:         ", label) 
+#print("Model raw prediction:       ", prediction)
+#print("Spell corrected prediction: ", ' '.join(corrected_prediction))
+
+
+# Comment to remove debug/unit test 
+print("\n\nUnit Test  transcription:         ", label) 
+print("Unit Test Model raw prediction:       ", " ".join(predicted_words))
+print("Unit Test Spell corrected prediction: ", ' '.join(corrected_prediction))
