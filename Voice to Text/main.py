@@ -35,6 +35,8 @@ import numpy as np
 import _pickle as pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
+import re
+from collections import Counter
 
 from data_generator import AudioGenerator, plot_raw_audio, plot_spectrogram_feature
 from utils import int_sequence_to_text
@@ -551,3 +553,110 @@ get_predictions(index=0,
                 #                             units=250, recur_layers=3), 
                 input_to_softmax=model_end,
                 model_path='./results/model_end.h5')
+
+# Spell corrector based on the training corpus
+def words(text): return re.findall(r'\w+', text.lower())
+
+# Prepare a corpus from the training data
+# (using helpers provided in data_generator.py) 
+corpus = AudioGenerator()
+corpus.load_train_data(desc_file='train-360_corpus.json')
+corpus_text = corpus.train_texts
+
+print("Corpus_text length: ", len(corpus_text), "\nFirst example : ", corpus_text[0])
+
+# Create a count the words in the corpus
+
+# For each sentence in the corpus 
+words_list = [ word for sentence in corpus_text for word in sentence.lower().split() ]
+
+print("words_list length: ", len(words_list), "\nFirst 50 examples: ", words_list[:50])
+
+WORDS=Counter(words_list)
+
+print("\nMost comon words:", WORDS.most_common(20))
+
+# Spell checker by Peter Norvig
+
+def P(word, N=sum(WORDS.values())): 
+    "Probability of `word`."
+    return WORDS[word] / N
+
+def correction(word): 
+    "Most probable spelling correction for word."
+    return max(candidates(word), key=P)
+
+def candidates(word): 
+    "Generate possible spelling corrections for word."
+    return (known([word]) or known(edits1(word)) or known(edits2(word)) or [word])
+
+def known(words): 
+    "The subset of `words` that appear in the dictionary of WORDS."
+    return set(w for w in words if w in WORDS)
+
+def edits1(word):
+    "All edits that are one edit away from `word`."
+    letters    = 'abcdefghijklmnopqrstuvwxyz'
+    splits     = [(word[:i], word[i:])    for i in range(len(word) + 1)]
+    deletes    = [L + R[1:]               for L, R in splits if R]
+    transposes = [L + R[1] + R[0] + R[2:] for L, R in splits if len(R)>1]
+    replaces   = [L + c + R[1:]           for L, R in splits if R for c in letters]
+    inserts    = [L + c + R               for L, R in splits for c in letters]
+    return set(deletes + transposes + replaces + inserts)
+
+def edits2(word): 
+    "All edits that are two edits away from `word`."
+    return (e2 for e1 in edits1(word) for e2 in edits1(e1))
+
+# Adjust get_predictions() method to return the True and predicted transcriptions
+
+def do_predictions(index, partition, input_to_softmax, model_path):
+    """ Return the True and predicted transcriptions
+    Params:
+        index (int): The example you would like to visualize
+        partition (str): One of 'train' or 'validation'
+        input_to_softmax (Model): The acoustic model
+        model_path (str): Path to saved acoustic model's weights
+    """
+    # load the train and test data
+    data_gen = AudioGenerator()
+    data_gen.load_train_data()
+    data_gen.load_validation_data()
+    
+    # obtain the true transcription and the audio features 
+    if partition == 'validation':
+        transcr = data_gen.valid_texts[index]
+        audio_path = data_gen.valid_audio_paths[index]
+        data_point = data_gen.normalize(data_gen.featurize(audio_path))
+    elif partition == 'train':
+        transcr = data_gen.train_texts[index]
+        audio_path = data_gen.train_audio_paths[index]
+        data_point = data_gen.normalize(data_gen.featurize(audio_path))
+    else:
+        raise Exception('Invalid partition!  Must be "train" or "validation"')
+        
+    # obtain and decode the acoustic model's predictions
+    input_to_softmax.load_weights(model_path)
+    prediction = input_to_softmax.predict(np.expand_dims(data_point, axis=0))
+    output_length = [input_to_softmax.output_length(data_point.shape[0])] 
+    pred_ints = (K.eval(K.ctc_decode(
+                prediction, output_length)[0][0])+1).flatten().tolist()
+    
+    # Return the true and predicted transcriptions
+    Audio(audio_path)
+    return transcr, ''.join(int_sequence_to_text(pred_ints))
+
+# Retrieve a prediction
+label, prediction = do_predictions(index=0,
+                                   partition='validation',  # or train
+                                   input_to_softmax=model_end,
+                                   model_path='./results/model_end.h5')
+
+# Spell Correction
+corrected_prediction=[]
+for word in prediction.lower().split():
+    corrected_prediction.append(correction(word))
+    
+print("True transcription:         ", label) 
+print("Model raw prediction:       ", prediction)
+print("Spell corrected prediction: ", ' '.join(corrected_prediction))
