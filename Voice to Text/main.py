@@ -37,6 +37,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import re
 from collections import Counter
+import nltk
+from nltk.corpus import brown
 
 from data_generator import AudioGenerator, plot_raw_audio, plot_spectrogram_feature
 from utils import int_sequence_to_text
@@ -47,6 +49,7 @@ from keras.backend.tensorflow_backend import set_session
 from keras.optimizers import SGD
 
 sns.set_style(style='white')
+nltk.download('brown')
 
 
 # Extract label and audio features for a single training example
@@ -660,3 +663,22 @@ for word in prediction.lower().split():
 print("True transcription:         ", label) 
 print("Model raw prediction:       ", prediction)
 print("Spell corrected prediction: ", ' '.join(corrected_prediction))
+
+# Rebuild the words list
+words_list = brown.words(categories='adventure') + brown.words(categories='romance') + brown.words(categories='fiction')
+
+print("words_list length: ", len(words_list), "\nFirst 50 examples: ", words_list[:50])
+
+WORDS=Counter(words_list)
+
+print("\nMost comon words:", WORDS.most_common(20))
+
+# Spell Correction
+corrected_prediction=[]
+for word in prediction.lower().split():
+    corrected_prediction.append(correction(word))
+    
+print("True transcription:         ", label) 
+print("Model raw prediction:       ", prediction)
+print("Spell corrected prediction: ", ' '.join(corrected_prediction))
+
