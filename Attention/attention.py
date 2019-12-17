@@ -59,3 +59,25 @@ for sample_i, (token_sent, pad_sent) in enumerate(zip(text_tokenized, test_pad))
     print('Sequence {} in x'.format(sample_i + 1))
     print('  Input:  {}'.format(np.array(token_sent)))
     print('  Output: {}'.format(pad_sent))
+    
+def preprocess(x, y):
+    """
+    :param x: Feature List of sentences
+    :param y: Label List of sentences
+    :return: Tuple of (Preprocessed x, Preprocessed y, x tokenizer, y tokenizer)
+    """
+    preprocess_x, x_tk = tokenize(x)
+    preprocess_y, y_tk = tokenize(y)
+
+    preprocess_x = pad(preprocess_x)
+    preprocess_y = pad(preprocess_y)
+
+    # Keras's sparse_categorical_crossentropy function requires the labels to be in 3 dimensions
+    preprocess_y = preprocess_y.reshape(*preprocess_y.shape, 1)
+
+    return preprocess_x, preprocess_y, x_tk, y_tk
+
+preproc_code_sentences, preproc_plaintext_sentences, code_tokenizer, plaintext_tokenizer =\
+    preprocess(codes, plaintext)
+
+print('Data Preprocessed')
