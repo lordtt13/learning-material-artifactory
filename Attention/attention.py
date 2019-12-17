@@ -121,3 +121,19 @@ simple_rnn_model = simple_model(
     len(plaintext_tokenizer.word_index)+1)
 
 simple_rnn_model.fit(tmp_x, preproc_plaintext_sentences, batch_size=32, epochs=5, validation_split=0.2)
+
+def logits_to_text(logits, tokenizer):
+    """
+    Turn logits from a neural network into text using the tokenizer
+    :param logits: Logits from a neural network
+    :param tokenizer: Keras Tokenizer fit on the labels
+    :return: String that represents the text of the logits
+    """
+    index_to_words = {id: word for word, id in tokenizer.word_index.items()}
+    index_to_words[0] = '<PAD>'
+
+    return ' '.join([index_to_words[prediction] for prediction in np.argmax(logits, 1)])
+
+print('`logits_to_text` function loaded.')
+
+print(logits_to_text(simple_rnn_model.predict(tmp_x[:1])[0], plaintext_tokenizer))
