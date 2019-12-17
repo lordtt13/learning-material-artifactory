@@ -97,7 +97,6 @@ def simple_model(input_shape, output_sequence_length, code_vocab_size, plaintext
     :param plaintext_vocab_size: Number of unique plaintext characters in the dataset
     :return: Keras model built, but not trained
     """
-    # TODO: Build the layers
     learning_rate = 1e-3
 
     input_seq = Input(input_shape[1:])
@@ -114,3 +113,11 @@ def simple_model(input_shape, output_sequence_length, code_vocab_size, plaintext
 # Reshaping the input to work with a basic RNN
 tmp_x = pad(preproc_code_sentences, preproc_plaintext_sentences.shape[1])
 tmp_x = tmp_x.reshape((-1, preproc_plaintext_sentences.shape[-2], 1))
+
+simple_rnn_model = simple_model(
+    tmp_x.shape,
+    preproc_plaintext_sentences.shape[1],
+    len(code_tokenizer.word_index)+1,
+    len(plaintext_tokenizer.word_index)+1)
+
+simple_rnn_model.fit(tmp_x, preproc_plaintext_sentences, batch_size=32, epochs=5, validation_split=0.2)
