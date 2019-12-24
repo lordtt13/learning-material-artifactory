@@ -11,6 +11,7 @@ import helper
 import numpy as np
 import project_tests as tests
 
+import keras
 import tensorflow as tf
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -19,7 +20,7 @@ from keras.layers import GRU, Input, Dense, TimeDistributed, Activation, RepeatV
 from keras.layers import concatenate, add, Bidirectional, LSTM
 from keras.layers.embeddings import Embedding
 from keras.optimizers import Adam
-from keras.losses import sparse_categorical_crossentropy
+from keras.losses import sparse_categorical_crossentropy as categorical_crossentropy
 
 from keras.callbacks import TensorBoard
 from time import time
@@ -125,7 +126,7 @@ def simple_model(input_shape, output_sequence_length, english_vocab_size, french
                              
     model = Model(input_seq, Activation('softmax')(logits))
 
-    model.compile(loss=sparse_categorical_crossentropy,
+    model.compile(loss=categorical_crossentropy,
                   optimizer=Adam(lr=1e-3),
                   metrics=['accuracy'])
     return model
@@ -184,7 +185,7 @@ def embed_model(input_shape, output_sequence_length, english_vocab_size, french_
     model = Model(input_seq, Activation('softmax')(logits))
     print(model.summary())
 
-    model.compile(loss=sparse_categorical_crossentropy,
+    model.compile(loss=categorical_crossentropy,
                   optimizer=Adam(lr=learning_rate),
                   metrics=['accuracy'])
     return model    
@@ -242,7 +243,7 @@ def bd_model(input_shape, output_sequence_length, english_vocab_size, french_voc
         
         model = Model(input_seq, Activation('softmax')(logits))
 
-    model.compile(loss=sparse_categorical_crossentropy,
+    model.compile(loss=categorical_crossentropy,
                   optimizer=Adam(lr=learning_rate),
                   metrics=['accuracy'])
   
@@ -308,7 +309,7 @@ def encdec_model(input_shape, output_sequence_length, english_vocab_size, french
     
     # Model
     model = Model(encoder_input_seq, Activation('softmax')(logits))
-    model.compile(loss=sparse_categorical_crossentropy,
+    model.compile(loss=categorical_crossentropy,
                   optimizer=Adam(lr=learning_rate),
                   metrics=['accuracy'])
      
@@ -399,7 +400,7 @@ def model_final(input_shape, output_sequence_length, english_vocab_size, french_
     
     # Model
     model = Model(encoder_input_seq, Activation('softmax')(logits))
-    model.compile(loss=sparse_categorical_crossentropy,
+    model.compile(loss=categorical_crossentropy,
                   optimizer=Adam(lr=learning_rate),
                   metrics=['accuracy'])
     
