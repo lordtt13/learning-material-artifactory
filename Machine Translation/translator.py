@@ -14,8 +14,9 @@ import project_tests as tests
 import tensorflow as tf
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from keras.models import Model
-from keras.layers import GRU, Input, Dense, TimeDistributed, Activation, RepeatVector, Bidirectional, LSTM
+from keras.models import Model, Sequential
+from keras.layers import GRU, Input, Dense, TimeDistributed, Activation, RepeatVector
+from keras.layers import concatenate, add, Bidirectional, LSTM
 from keras.layers.embeddings import Embedding
 from keras.optimizers import Adam
 from keras.losses import sparse_categorical_crossentropy
@@ -223,7 +224,6 @@ def bd_model(input_shape, output_sequence_length, english_vocab_size, french_voc
     if impl=='func':
         # Sequential Model 
         print("Using Sequential model (Note: this version makes the unitary test to fail: Disable tests to use it)")
-        from keras.models import Sequential
         model = Sequential()
         model.add(Bidirectional(GRU(english_vocab_size, dropout=dropout, return_sequences=True)))
         model.add(Dense(french_vocab_size, activation='softmax'))
@@ -232,7 +232,6 @@ def bd_model(input_shape, output_sequence_length, english_vocab_size, french_voc
         # model's Functional equivalent
         # Note : we could have also used "Bidirectional(GRU(...))" instead of buidling the Bidirectional RNNS manually
         print("Using Functional API")
-        from keras.layers import concatenate, add
         input_seq = Input(shape=input_shape[1:])
         right_rnn = GRU(units=english_vocab_size, return_sequences=True, go_backwards=False)(input_seq)
         left_rnn = GRU(units=english_vocab_size, return_sequences=True, go_backwards=True)(input_seq)
@@ -334,3 +333,95 @@ encdec_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10
 
 # Print prediction(s)
 print(logits_to_text(encdec_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
+
+def model_final(input_shape, output_sequence_length, english_vocab_size, french_vocab_size):
+    """
+    Build and train a model that incorporates embedding, encoder-decoder, and bidirectional RNN on x and y
+    :param input_shape: Tuple of input shape
+    :param output_sequence_length: Length of output sequence
+    :param english_vocab_size: Number of unique English words in the dataset
+    :param french_vocab_size: Number of unique French words in the dataset
+    :return: Keras model built, but not trained
+    """    
+    # Hyperparameters
+    embedding_size = 128
+    rnn_cells = 300
+    dropout = 0.2
+    learning_rate = 1e-3
+    
+    from keras.layers import LSTM, concatenate
+    
+    # Input and embedding
+    encoder_input_seq = Input(shape=input_shape[1:]) 
+    embedded_input_seq = Embedding(input_dim = english_vocab_size,
+                                   output_dim = embedding_size,
+                                   input_length=input_shape[1:][0])(encoder_input_seq)
+    
+    ## Note Bidirectional LSTM is used on the encoder side (see https://arxiv.org/pdf/1609.08144.pdf )
+    ## Alternate version : Encoder RNN Bidirectional layer (Using the Keras Bidirectional layer wrappers)
+    #encoder_output, forward_state_h, forward_state_c, backward_state_h, backward_state_c = Bidirectional(LSTM(units=rnn_cells,
+    #                                                                                                          dropout=dropout,
+    #                                                                                                          return_sequences=False,
+    #                                                                                                          return_state=True))(embedded_input_seq)
+    
+    # Encoder Forward RNN layer
+    encoder_forward_output, forward_state_h, forward_state_c = LSTM(units=rnn_cells,
+                                                                    dropout=dropout,
+                                                                    return_sequences=False,
+                                                                    return_state=True,
+                                                                    go_backwards=False)(embedded_input_seq)
+    
+    # Encoder backward RNN layer
+    encoder_backward_output, backward_state_h, backward_state_c = LSTM(units=rnn_cells,
+                                                                       dropout=dropout,
+                                                                       return_sequences=False,
+                                                                       return_state=True,
+                                                                       go_backwards=True)(embedded_input_seq)
+    
+    # Encoder output and states : Merge the LSTM Forward and Backward ouputs (using 'concatenate' method) 
+    state_h = concatenate([forward_state_h, backward_state_h]) 
+    state_c = concatenate([forward_state_c, backward_state_c])    
+    encoder_output = concatenate([encoder_forward_output, encoder_backward_output])        
+         
+    # Decoder Input   
+    decoder_input_seq = RepeatVector(output_sequence_length)(encoder_output)
+    
+    # Decoder RNN layer
+    # Note : we need twice more LSTM cells as we have concatenated backward and forward LSTM layers in encoder
+    decoder_output = LSTM(units=rnn_cells*2,
+                                  dropout=dropout,
+                                  return_sequences=True,
+                                  return_state=False,
+                                  go_backwards=False)(decoder_input_seq, initial_state=[state_h, state_c])
+    
+    # Decoder output
+    logits = TimeDistributed(Dense(units=french_vocab_size))(decoder_output) 
+    
+    # Model
+    model = Model(encoder_input_seq, Activation('softmax')(logits))
+    model.compile(loss=sparse_categorical_crossentropy,
+                  optimizer=Adam(lr=learning_rate),
+                  metrics=['accuracy'])
+    
+    return model    
+       
+tests.test_model_final(model_final)
+print('Final Model Loaded\n')
+
+# Train and Print prediction(s)
+
+# Pad the input to work with the Embedding layer
+tmp_x = pad(preproc_english_sentences, max_french_sequence_length)
+
+# Train the neural network 
+final_rnn_model = model_final(input_shape = tmp_x.shape,
+                              output_sequence_length = max_french_sequence_length,
+                              english_vocab_size = english_vocab_size+1,
+                              french_vocab_size = french_vocab_size+1)
+
+print(final_rnn_model.summary(line_length=125))
+
+final_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2)
+
+# Print prediction(s)
+print(logits_to_text(final_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
