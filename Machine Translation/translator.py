@@ -117,9 +117,7 @@ def simple_model(input_shape, output_sequence_length, english_vocab_size, french
     :param english_vocab_size: Number of unique English words in the dataset
     :param french_vocab_size: Number of unique French words in the dataset
     :return: Keras model built, but not trained
-    """
-    # TODO: Build the layers
-    
+    """    
     input_seq = Input(shape=input_shape[1:])
     rnn = GRU(units=english_vocab_size, return_sequences=True)(input_seq)
     logits = TimeDistributed(Dense(units=french_vocab_size))(rnn) 
@@ -192,11 +190,8 @@ def embed_model(input_shape, output_sequence_length, english_vocab_size, french_
     
 tests.test_embed_model(embed_model)
 
-
 # Pad the input to work with the Embedding layer
 tmp_x = pad(preproc_english_sentences, max_french_sequence_length)
-#print("Debug tmp_x shape=", tmp_x.shape )
-
 
 # Train the neural network 
 embed_rnn_model = embed_model(input_shape = tmp_x.shape,
@@ -210,3 +205,65 @@ embed_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10,
 # Print prediction(s)
 print(logits_to_text(embed_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
 
+def bd_model(input_shape, output_sequence_length, english_vocab_size, french_vocab_size):
+    """
+    Build and train a bidirectional RNN model on x and y
+    :param input_shape: Tuple of input shape
+    :param output_sequence_length: Length of output sequence
+    :param english_vocab_size: Number of unique English words in the dataset
+    :param french_vocab_size: Number of unique French words in the dataset
+    :return: Keras model built, but not trained
+    """
+    # Hyperparameters
+    dropout = 0.0
+    learning_rate = 1e-3
+    
+    # Choose Sequential or Functional API implementation ('seq' or 'func')
+    impl='seq'   
+    if impl=='func':
+        # Sequential Model 
+        print("Using Sequential model (Note: this version makes the unitary test to fail: Disable tests to use it)")
+        from keras.models import Sequential
+        model = Sequential()
+        model.add(Bidirectional(GRU(english_vocab_size, dropout=dropout, return_sequences=True)))
+        model.add(Dense(french_vocab_size, activation='softmax'))
+        
+    else:
+        # model's Functional equivalent
+        # Note : we could have also used "Bidirectional(GRU(...))" instead of buidling the Bidirectional RNNS manually
+        print("Using Functional API")
+        from keras.layers import concatenate, add
+        input_seq = Input(shape=input_shape[1:])
+        right_rnn = GRU(units=english_vocab_size, return_sequences=True, go_backwards=False)(input_seq)
+        left_rnn = GRU(units=english_vocab_size, return_sequences=True, go_backwards=True)(input_seq)
+
+        # Choose how to merge the 2 rnn layers : add or concatenate
+        #logits = TimeDistributed(Dense(units=french_vocab_size))(add([right_rnn, left_rnn])) 
+        logits = TimeDistributed(Dense(units=french_vocab_size))(concatenate([right_rnn, left_rnn])) 
+        
+        model = Model(input_seq, Activation('softmax')(logits))
+
+    model.compile(loss=sparse_categorical_crossentropy,
+                  optimizer=Adam(lr=learning_rate),
+                  metrics=['accuracy'])
+  
+    return model
+   
+tests.test_bd_model(bd_model)
+
+# Pad and Reshape the input to work with a RNN without an Embedding layer
+tmp_x = pad(preproc_english_sentences, max_french_sequence_length)
+tmp_x = tmp_x.reshape((-1, preproc_french_sentences.shape[-2], 1))
+
+# Train the neural network 
+bd_rnn_model = bd_model(input_shape = tmp_x.shape,
+                           output_sequence_length = max_french_sequence_length,
+                           english_vocab_size = english_vocab_size+1,
+                           french_vocab_size = french_vocab_size+1)
+
+print(bd_rnn_model.summary())
+
+bd_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2)
+
+# Print prediction(s)
+print(logits_to_text(bd_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
