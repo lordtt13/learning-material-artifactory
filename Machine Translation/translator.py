@@ -148,3 +148,65 @@ simple_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10
 
 # Print prediction(s)
 print(logits_to_text(simple_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
+
+def embed_model(input_shape, output_sequence_length, english_vocab_size, french_vocab_size):
+    """
+    Build and train a RNN model using word embedding on x and y
+    :param input_shape: Tuple of input shape
+    :param output_sequence_length: Length of output sequence
+    :param english_vocab_size: Number of unique English words in the dataset
+    :param french_vocab_size: Number of unique French words in the dataset
+    :return: Keras model built, but not trained
+    """
+    
+    # Hyperparameters
+    embedding_size = 128
+    rnn_cells = 200
+    dropout = 0.0
+    learning_rate = 1e-3
+    
+    # Sequential Model
+    #from keras.models import Sequential
+    #model = Sequential()
+    #model.add(Embedding(english_vocab_size, embedding_size, input_length=input_shape[1:][0]))
+    #model.add(GRU(rnn_cells, dropout=dropout, return_sequences=True))
+    #model.add(Dense(french_vocab_size, activation='softmax'))
+    #print(model.summary())
+    
+    # model's Functional equivalent
+    input_seq = Input(shape=input_shape[1:])
+     
+    embedded_seq = Embedding(input_dim = english_vocab_size, 
+                             output_dim = embedding_size,
+                             input_length=input_shape[1:][0])(input_seq)
+    
+    rnn = GRU(units=rnn_cells, dropout=dropout, return_sequences=True)(embedded_seq)
+    logits = TimeDistributed(Dense(units=french_vocab_size))(rnn) 
+    model = Model(input_seq, Activation('softmax')(logits))
+    print(model.summary())
+
+    model.compile(loss=sparse_categorical_crossentropy,
+                  optimizer=Adam(lr=learning_rate),
+                  metrics=['accuracy'])
+    return model    
+    
+tests.test_embed_model(embed_model)
+
+
+# Pad the input to work with the Embedding layer
+tmp_x = pad(preproc_english_sentences, max_french_sequence_length)
+#print("Debug tmp_x shape=", tmp_x.shape )
+
+
+# Train the neural network 
+embed_rnn_model = embed_model(input_shape = tmp_x.shape,
+                              output_sequence_length = max_french_sequence_length,
+                              english_vocab_size = english_vocab_size+1,
+                              french_vocab_size = french_vocab_size+1)
+
+
+embed_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2)
+
+# Print prediction(s)
+print(logits_to_text(embed_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
+
