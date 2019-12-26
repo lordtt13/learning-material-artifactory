@@ -425,3 +425,36 @@ final_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10,
 
 # Print prediction(s)
 print(logits_to_text(final_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
+
+def final_predictions(x, y, x_tk, y_tk):
+    """
+    Gets predictions using the final model
+    :param x: Preprocessed English data
+    :param y: Preprocessed French data
+    :param x_tk: English tokenizer
+    :param y_tk: French tokenizer
+    """
+    model = model_final(input_shape = x.shape,
+                        output_sequence_length = y.shape[1],
+                        english_vocab_size = len(x_tk.word_index)+1,
+                        french_vocab_size = len(y_tk.word_index)+1)
+
+    model.fit(x, y, batch_size=1024, epochs=20, validation_split=0.2)
+    
+    y_id_to_word = {value: key for key, value in y_tk.word_index.items()}
+    y_id_to_word[0] = '<PAD>'
+
+    sentence = 'he saw a old yellow truck'
+    sentence = [x_tk.word_index[word] for word in sentence.split()]
+    sentence = pad_sequences([sentence], maxlen=x.shape[-1], padding='post')
+    sentences = np.array([sentence[0], x[0]])
+    predictions = model.predict(sentences, len(sentences))
+
+    print('Sample 1:')
+    print(' '.join([y_id_to_word[np.argmax(x)] for x in predictions[0]]))
+    print('Il a vu un vieux camion jaune')
+    print('Sample 2:')
+    print(' '.join([y_id_to_word[np.argmax(x)] for x in predictions[1]]))
+    print(' '.join([y_id_to_word[np.max(x)] for x in y[0]]))
+
+final_predictions(preproc_english_sentences, preproc_french_sentences, english_tokenizer, french_tokenizer)
