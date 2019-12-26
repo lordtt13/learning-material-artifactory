@@ -15,7 +15,7 @@ import tensorflow as tf
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Model
-from keras.layers import GRU, Input, Dense, TimeDistributed, Activation, RepeatVector, Bidirectional
+from keras.layers import GRU, Input, Dense, TimeDistributed, Activation, RepeatVector, Bidirectional, LSTM
 from keras.layers.embeddings import Embedding
 from keras.optimizers import Adam
 from keras.losses import sparse_categorical_crossentropy
@@ -267,3 +267,70 @@ bd_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, va
 
 # Print prediction(s)
 print(logits_to_text(bd_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
+
+def encdec_model(input_shape, output_sequence_length, english_vocab_size, french_vocab_size):
+    """
+    Build and train an encoder-decoder model on x and y
+    :param input_shape: Tuple of input shape
+    :param output_sequence_length: Length of output sequence
+    :param english_vocab_size: Number of unique English words in the dataset
+    :param french_vocab_size: Number of unique French words in the dataset
+    :return: Keras model built, but not trained
+    """    
+    # Hyperparameters
+    embedding_size = 128
+    rnn_cells = 200
+    dropout = 0.0
+    learning_rate = 1e-3
+        
+    # Input
+    encoder_input_seq = Input(shape=input_shape[1:], name="enc_input")
+ 
+    # Encoder (Return the internal states of the RNN -> 1 hidden state for GRU cells, 2 hidden states for LSTM cells))
+    encoder_output, state_t = GRU(units=rnn_cells, 
+                                  dropout=dropout,
+                                  return_sequences=False,
+                                  return_state=True,
+                                  name="enc_rnn")(encoder_input_seq)
+          #or for LSTM cells: encoder_output, state_h, state_c = LSTM(...)
+        
+    # Decoder Input   
+    decoder_input_seq = RepeatVector(output_sequence_length)(encoder_output)
+
+    # Decoder RNN (Take the encoder returned states as initial states)
+    decoder_out = GRU(units=rnn_cells,
+                      dropout=dropout,
+                      return_sequences=True,
+                      return_state=False)(decoder_input_seq, initial_state=state_t)
+                                         #or for LSTM cells: (decoder_input_seq, initial_state=[state_h, state_c])
+    
+    # Decoder output 
+    logits = TimeDistributed(Dense(units=french_vocab_size))(decoder_out) 
+    
+    # Model
+    model = Model(encoder_input_seq, Activation('softmax')(logits))
+    model.compile(loss=sparse_categorical_crossentropy,
+                  optimizer=Adam(lr=learning_rate),
+                  metrics=['accuracy'])
+     
+    return model    
+    
+# Unitary tests
+tests.test_encdec_model(encdec_model)
+
+# Pad and Reshape the input to work with the Embedding layer
+tmp_x = pad(preproc_english_sentences, max_french_sequence_length)
+tmp_x = tmp_x.reshape((-1, preproc_french_sentences.shape[-2], 1))
+
+# Train the neural network 
+encdec_rnn_model = encdec_model(input_shape = tmp_x.shape,
+                                output_sequence_length = max_french_sequence_length,
+                                english_vocab_size = english_vocab_size+1,
+                                french_vocab_size = french_vocab_size+1)
+    
+print(encdec_rnn_model.summary())
+
+encdec_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2, callbacks=[tensorboard]) 
+
+# Print prediction(s)
+print(logits_to_text(encdec_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
