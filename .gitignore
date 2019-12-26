@@ -13,3 +13,4 @@ gen
 ./Naive Bayes/readme
 *__pycache__
 *.csv
+/Machine Translation/data/
