@@ -9,11 +9,21 @@ import numpy as np
 import keras
 from keras.datasets import imdb
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
+from keras.layers import Dense, Dropout
 from keras.preprocessing.text import Tokenizer
-import matplotlib.pyplot as plt
 
+
+# save np.load
+np_load_old = np.load
+
+# modify the default parameters of np.load
+np.load = lambda *a,**k: np_load_old(*a, allow_pickle=True, **k)
+
+# call load_data with allow_pickle implicitly set to true
 (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=1000)
+
+# restore np.load for future normal usage
+np.load = np_load_old
 
 # Turning the output into vector mode, each of length 1000
 tokenizer = Tokenizer(num_words=1000)
