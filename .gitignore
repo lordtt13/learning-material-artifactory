@@ -14,3 +14,4 @@ gen
 *__pycache__
 *.csv
 /Machine Translation/data/
+/Machine Translation/logs/
