@@ -86,8 +86,83 @@ config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.5
 set_session(tf.Session(config=config))
 
+# Model 0: RNN
 model_0 = simple_rnn_model(input_dim=161) # change to 13 if you would like to use MFCC features
 
 """
+As explored in the lesson, we will train the acoustic model with the CTC loss criterion. 
 
+To train your architecture, we will use the train_model function within the train_utils module. 
+The train_model function takes three required arguments:
+
+input_to_softmax - a Keras model instance.
+pickle_path - the name of the pickle file where the loss history will be saved.
+save_model_path - the name of the HDF5 file where the model will be saved.
+
+There are several optional arguments that allow you to have more control over the training process. 
+
+minibatch_size - the size of the minibatches that are generated while training the model (default: 20).
+spectrogram - Boolean value dictating whether spectrogram (True) or MFCC (False) features are used for training (default: True).
+mfcc_dim - the size of the feature dimension to use when generating MFCC features (default: 13).
+optimizer - the Keras optimizer used to train the model (default: SGD(lr=0.02, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5)).
+epochs - the number of epochs to use to train the model (default: 20). If you choose to modify this parameter, make sure that it is at least 20.
+verbose - controls the verbosity of the training output in the model.fit_generator method (default: 1).
+sort_by_duration - Boolean value dictating whether the training and validation sets are sorted by (increasing) duration before the start of the first epoch (default: False).
+The train_model function defaults to using spectrogram features; if you choose to use these features, note that the acoustic model in simple_rnn_model should have input_dim=161. Otherwise, if you choose to use MFCC features, the acoustic model should have input_dim=13.
+
+IMPORTANT NOTE: If we notice that your gradient has exploded in any of the models below, feel free to explore more with gradient clipping (the clipnorm argument in your optimizer) or swap out any SimpleRNN cells for LSTM or GRU cells. 
+We can also try restarting the kernel to restart the training process.
 """
+
+train_model(input_to_softmax=model_0, 
+            pickle_path='model_0.pickle', 
+            save_model_path='model_0.h5',
+            minibatch_size=128,
+            spectrogram=True) # change to False if you would like to use MFCC features
+
+# Model 1: RNN + TimeDistributed Dense
+model_1 = rnn_model(input_dim=161, # change to 13 if you would like to use MFCC features
+                    units=10,
+                    activation='relu')
+
+train_model(input_to_softmax=model_1, 
+            pickle_path='model_1.pickle', 
+            save_model_path='model_1.h5',
+            minibatch_size=128,
+            spectrogram=True) # change to False if you would like to use MFCC features
+
+# Model 2: CNN + RNN + TimeDistributed Dense
+model_2 = cnn_rnn_model(input_dim=161, # change to 13 if you would like to use MFCC features
+                        filters=200,
+                        kernel_size=11, 
+                        conv_stride=2,
+                        conv_border_mode='valid',
+                        units=200)
+
+train_model(input_to_softmax=model_2, 
+            pickle_path='model_2.pickle', 
+            save_model_path='model_2.h5',
+            minibatch_size=64, 
+            spectrogram=True) # change to False if you would like to use MFCC features
+
+# Model 3: Deeper RNN + TimeDistributed Dense
+model_3 = deep_rnn_model(input_dim=161, # change to 13 if you would like to use MFCC features
+                         units=200,
+                         recur_layers=2)
+
+train_model(input_to_softmax=model_3, 
+            pickle_path='model_3.pickle', 
+            save_model_path='model_3.h5',
+            minibatch_size=128,
+            spectrogram=True) # change to False if you would like to use MFCC features
+
+# Model 4: Bidirectional RNN + TimeDistributed Dense
+model_4 = bidirectional_rnn_model(input_dim=161, # change to 13 if you would like to use MFCC features
+                                  units=200)
+
+train_model(input_to_softmax=model_4, 
+            pickle_path='model_4.pickle', 
+            save_model_path='model_4.h5',
+            minibatch_size=128,
+            spectrogram=True) # change to False if you would like to use MFCC features
+
