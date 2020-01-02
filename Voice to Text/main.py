@@ -414,3 +414,34 @@ train_model(input_to_softmax=model_end,
             train_json='train_corpus.json',
             spectrogram=True) # change to False if you would like to use MFCC features
 
+# Final model trained on 30 epochs and development training set
+model_end = final_model(input_dim=161, # change to 13 if you would like to use MFCC features
+                        # CNN parameters
+                        cnn_layers =3,
+                        filters=350, kernel_size=11, conv_stride=1, conv_border_mode='same', dilation=4,
+                        cnn_implementation='BN-DR-AC',
+                        cnn_dropout=0.3,
+                        cnn_activation='relu',
+                        # RNN parameters
+                        reccur_units=200,  #29,
+                        recur_layers=3,
+                        recur_type='LSTM',
+                        recur_implementation=2,
+                        reccur_droput=0.3,
+                        recurrent_dropout=0.1, 
+                        reccur_merge_mode='sum', 
+                        # Fully Connected layer parameters
+                        fc_units=[400, 200, 100],
+                        fc_dropout=0.3,
+                        fc_activation='relu')
+
+train_model(input_to_softmax=model_end,
+            epochs=30, 
+            minibatch_size=128, ##### Adjust batch size
+            optimizer=SGD(lr=0.025, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=4.0),
+            sort_by_duration=True,
+            pickle_path='model_candidate.pickle', 
+            save_model_path='model_candidate.h5',
+            train_json='train_corpus.json',
+            spectrogram=True) # change to False if you would like to use MFCC features
+
