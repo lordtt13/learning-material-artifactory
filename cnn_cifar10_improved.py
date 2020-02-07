@@ -56,3 +56,8 @@ x = Dense(K, activation='softmax')(x)
 
 model = Model(i, x)
 
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+r = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=50)
