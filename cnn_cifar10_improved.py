@@ -61,3 +61,22 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 r = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=50)
+
+# Fit with data augmentation
+# Note: if you run this AFTER calling the previous model.fit(), it will CONTINUE training where it left off
+batch_size = 32
+data_generator = tf.keras.preprocessing.image.ImageDataGenerator(width_shift_range=0.1, height_shift_range=0.1, horizontal_flip=True)
+train_generator = data_generator.flow(x_train, y_train, batch_size)
+steps_per_epoch = x_train.shape[0] // batch_size
+r = model.fit_generator(train_generator, validation_data=(x_test, y_test), steps_per_epoch=steps_per_epoch, epochs=50)
+
+# Loss
+plt.plot(r.history['loss'], label='loss')
+plt.plot(r.history['val_loss'], label='val_loss')
+plt.legend()
+
+# Accuracy
+plt.plot(r.history['accuracy'], label='acc')
+plt.plot(r.history['val_accuracy'], label='val_acc')
+plt.legend()
+
