@@ -21,3 +21,38 @@ x_train, x_test = x_train / 255.0, x_test / 255.0
 y_train, y_test = y_train.flatten(), y_test.flatten()
 
 K = len(set(y_train))
+
+# Build the model using the functional API
+i = Input(shape=x_train[0].shape)
+# x = Conv2D(32, (3, 3), strides=2, activation='relu')(i)
+# x = Conv2D(64, (3, 3), strides=2, activation='relu')(x)
+# x = Conv2D(128, (3, 3), strides=2, activation='relu')(x)
+
+x = Conv2D(32, (3, 3), activation='relu', padding='same')(i)
+x = BatchNormalization()(x)
+x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = MaxPooling2D((2, 2))(x)
+# x = Dropout(0.2)(x)
+x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = MaxPooling2D((2, 2))(x)
+# x = Dropout(0.2)(x)
+x = Conv2D(128, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = Conv2D(128, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = MaxPooling2D((2, 2))(x)
+# x = Dropout(0.2)(x)
+
+# x = GlobalMaxPooling2D()(x)
+x = Flatten()(x)
+x = Dropout(0.2)(x)
+x = Dense(1024, activation='relu')(x)
+x = Dropout(0.2)(x)
+x = Dense(K, activation='softmax')(x)
+
+model = Model(i, x)
+
