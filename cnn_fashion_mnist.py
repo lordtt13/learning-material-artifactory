@@ -6,6 +6,7 @@ Created on Fri Feb  7 12:28:49 2020
 """
 import itertools
 import numpy as np
+import tensorflow as tf
 import matplotlib.pyplot as plt
 
 from tensorflow.keras.layers import Input, Conv2D, Dense, Flatten, Dropout
