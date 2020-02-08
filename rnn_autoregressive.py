@@ -52,7 +52,6 @@ r = model.fit(
   validation_data=(X[-N//2:], Y[-N//2:]),
 )
 
-import matplotlib.pyplot as plt
 plt.plot(r.history['loss'], label='loss')
 plt.plot(r.history['val_loss'], label='val_loss')
 plt.legend()
