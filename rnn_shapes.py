@@ -32,3 +32,21 @@ Yhat = model.predict(X)
 print(Yhat)
 
 model.summary()
+
+Wx, Wh, bh = model.layers[1].get_weights()
+Wo, bo = model.layers[2].get_weights()
+
+h_last = np.zeros(M) # initial hidden state
+x = X[0] # the one and only sample
+Yhats = [] # where we store the outputs
+
+for t in range(T):
+  h = np.tanh(x[t].dot(Wx) + h_last.dot(Wh) + bh)
+  y = h.dot(Wo) + bo # we only care about this value on the last iteration
+  Yhats.append(y)
+  
+  # important: assign h to h_last
+  h_last = h
+
+# print the final output
+print(Yhats[-1])
