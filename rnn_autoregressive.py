@@ -56,3 +56,45 @@ import matplotlib.pyplot as plt
 plt.plot(r.history['loss'], label='loss')
 plt.plot(r.history['val_loss'], label='val_loss')
 plt.legend()
+
+# "Wrong" forecast using true targets
+
+validation_target = Y[-N//2:]
+validation_predictions = []
+
+# index of first validation input
+i = -N//2
+
+while len(validation_predictions) < len(validation_target):
+  p = model.predict(X[i].reshape(1, -1))[0,0] # 1x1 array -> scalar
+  i += 1
+  
+  # update the predictions list
+  validation_predictions.append(p)
+  
+
+plt.plot(validation_target, label='forecast target')
+plt.plot(validation_predictions, label='forecast prediction')
+plt.legend()
+
+# Forecast future values (use only self-predictions for making future predictions)
+
+validation_target = Y[-N//2:]
+validation_predictions = []
+
+# last train input
+last_x = X[-N//2] # 1-D array of length T
+
+while len(validation_predictions) < len(validation_target):
+  p = model.predict(last_x.reshape(1, -1))[0,0] # 1x1 array -> scalar
+  
+  # update the predictions list
+  validation_predictions.append(p)
+  
+  # make the new input
+  last_x = np.roll(last_x, -1)
+  last_x[-1] = p
+  
+plt.plot(validation_target, label='forecast target')
+plt.plot(validation_predictions, label='forecast prediction')
+plt.legend()
