@@ -103,3 +103,29 @@ r = model.fit(
   epochs=200,
   validation_split=0.5,
 )
+
+plt.plot(r.history['loss'], label='loss')
+plt.plot(r.history['val_loss'], label='val_loss')
+plt.legend()
+
+plt.plot(r.history['accuracy'], label='acc')
+plt.plot(r.history['val_accuracy'], label='val_acc')
+plt.legend()
+
+# Now change to the long distance problem
+
+# Start with a small T and increase it later
+T = 10
+D = 1
+X = []
+Y = []
+
+for t in range(5000):
+  x = np.random.randn(T)
+  X.append(x)
+  y = get_label(x, 0, 1, 2) # long distance
+  Y.append(y)
+
+X = np.array(X)
+Y = np.array(Y)
+N = len(X)
