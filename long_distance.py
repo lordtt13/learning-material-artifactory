@@ -275,3 +275,85 @@ plt.legend()
 plt.plot(r.history['accuracy'], label='acc')
 plt.plot(r.history['val_accuracy'], label='val_acc')
 plt.legend()
+
+# Now change to the long distance problem
+
+# Start with a small T and increase it later
+T = 10
+D = 1
+X = []
+Y = []
+
+for t in range(5000):
+  x = np.random.randn(T)
+  X.append(x)
+  y = get_label(x, 0, 1, 2) # long distance
+  Y.append(y)
+
+X = np.array(X)
+Y = np.array(Y)
+N = len(X)
+
+# Now test our Simple RNN again
+inputs = np.expand_dims(X, -1)
+
+# make the RNN
+i = Input(shape=(T, D))
+
+# method 1
+x = SimpleRNN(5)(i)
+
+x = Dense(1, activation='sigmoid')(x)
+model = Model(i, x)
+model.compile(
+  loss='binary_crossentropy',
+  optimizer=Adam(lr=0.01),
+  metrics=['accuracy'],
+)
+
+# train the RNN
+r = model.fit(
+  inputs, Y,
+  epochs=200,
+  validation_split=0.5,
+)
+
+plt.plot(r.history['loss'], label='loss')
+plt.plot(r.history['val_loss'], label='val_loss')
+plt.legend()
+
+plt.plot(r.history['accuracy'], label='acc')
+plt.plot(r.history['val_accuracy'], label='val_acc')
+plt.legend()
+
+# Now test our LSTM
+inputs = np.expand_dims(X, -1)
+
+# make the RNN
+i = Input(shape=(T, D))
+
+# method 1
+x = LSTM(5)(i)
+
+x = Dense(1, activation='sigmoid')(x)
+model = Model(i, x)
+model.compile(
+  loss='binary_crossentropy',
+  optimizer=Adam(lr=0.01),
+  metrics=['accuracy'],
+)
+
+# train the RNN
+r = model.fit(
+  inputs, Y,
+  epochs=200,
+  validation_split=0.5,
+)
+
+plt.plot(r.history['loss'], label='loss')
+plt.plot(r.history['val_loss'], label='val_loss')
+plt.legend()
+
+plt.plot(r.history['accuracy'], label='acc')
+plt.plot(r.history['val_accuracy'], label='val_acc')
+plt.legend()
