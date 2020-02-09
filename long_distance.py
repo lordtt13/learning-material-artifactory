@@ -71,3 +71,35 @@ plt.plot(r.history['accuracy'], label='acc')
 plt.plot(r.history['val_accuracy'], label='val_acc')
 plt.legend()
 
+# Now try a simple RNN
+inputs = np.expand_dims(X, -1)
+
+# make the RNN
+i = Input(shape=(T, D))
+
+# method 1
+# x = LSTM(5)(i)
+x = SimpleRNN(5)(i)
+# x = GRU(5)(i)
+
+# method 2
+# x = LSTM(5, return_sequences=True)(i)
+# x = GlobalMaxPool1D()(x)
+
+x = Dense(1, activation='sigmoid')(x)
+model = Model(i, x)
+model.compile(
+  loss='binary_crossentropy',
+  # optimizer='rmsprop',
+#   optimizer='adam',
+  optimizer=Adam(lr=0.01),
+  # optimizer=SGD(lr=0.1, momentum=0.9),
+  metrics=['accuracy'],
+)
+
+# train the RNN
+r = model.fit(
+  inputs, Y,
+  epochs=200,
+  validation_split=0.5,
+)
