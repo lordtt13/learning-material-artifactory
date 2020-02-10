@@ -247,3 +247,30 @@ for u in range(N - Ntrain):
   X_test[u, :, :] = input_data[t:t+T]
   Y_test[u] = (targets[t+T] > 0)
   
+# make the RNN
+i = Input(shape=(T, D))
+x = LSTM(50)(i)
+x = Dense(1, activation='sigmoid')(x)
+model = Model(i, x)
+model.compile(
+  loss='binary_crossentropy',
+  optimizer=Adam(lr=0.001),
+  metrics=['accuracy'],
+)
+
+# train the RNN
+r = model.fit(
+  X_train, Y_train,
+  batch_size=32,
+  epochs=300,
+  validation_data=(X_test, Y_test),
+)
+
+plt.plot(r.history['loss'], label='loss')
+plt.plot(r.history['val_loss'], label='val_loss')
+plt.legend()
+
+plt.plot(r.history['accuracy'], label='accuracy')
+plt.plot(r.history['val_accuracy'], label='val_accuracy')
+plt.legend()
+plt.show()
