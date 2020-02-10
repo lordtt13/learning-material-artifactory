@@ -210,3 +210,40 @@ while len(validation_predictions) < len(validation_target):
 plt.plot(validation_target, label='forecast target')
 plt.plot(validation_predictions, label='forecast prediction')
 plt.legend()
+
+# Now turn the full data into numpy arrays
+
+# Not yet in the final "X" format!
+input_data = df[['open', 'high', 'low', 'close', 'volume']].values
+targets = df['Return'].values
+
+# Now make the actual data which will go into the neural network
+T = 10 # the number of time steps to look at to make a prediction for the next day
+D = input_data.shape[1]
+N = len(input_data) - T # (e.g. if T=10 and you have 11 data points then you'd only have 1 sample)
+
+# normalize the inputs
+Ntrain = len(input_data) * 2 // 3
+scaler = StandardScaler()
+scaler.fit(input_data[:Ntrain + T - 1])
+input_data = scaler.transform(input_data)
+
+# Setup X_train and Y_train
+X_train = np.zeros((Ntrain, T, D))
+Y_train = np.zeros(Ntrain)
+
+for t in range(Ntrain):
+  X_train[t, :, :] = input_data[t:t+T]
+  Y_train[t] = (targets[t+T] > 0)
+  
+# Setup X_test and Y_test
+X_test = np.zeros((N - Ntrain, T, D))
+Y_test = np.zeros(N - Ntrain)
+
+for u in range(N - Ntrain):
+  # u counts from 0...(N - Ntrain)
+  # t counts from Ntrain...N
+  t = u + Ntrain
+  X_test[u, :, :] = input_data[t:t+T]
+  Y_test[u] = (targets[t+T] > 0)
+  
