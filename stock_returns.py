@@ -104,3 +104,47 @@ while len(validation_predictions) < len(validation_target):
 plt.plot(validation_target, label='forecast target')
 plt.plot(validation_predictions, label='forecast prediction')
 plt.legend()
+
+# calculate returns by first shifting the data
+df['PrevClose'] = df['close'].shift(1) # move everything up 1
+
+# so now it's like
+# close / prev close
+# x[2] x[1]
+# x[3] x[2]
+# x[4] x[3]
+# ...
+# x[t] x[t-1]
+
+# then the return is
+# (x[t] - x[t-1]) / x[t-1]
+df['Return'] = (df['close'] - df['PrevClose']) / df['PrevClose']
+
+# Now let's try an LSTM to predict returns
+df['Return'].hist()
+
+series = df['Return'].values[1:].reshape(-1, 1)
+
+# Normalize the data
+# Note: I didn't think about where the true boundary is, this is just approx.
+scaler = StandardScaler()
+scaler.fit(series[:len(series) // 2])
+series = scaler.transform(series).flatten()
+
+### build the dataset
+# let's see if we can use T past values to predict the next value
+T = 10
+D = 1
+X = []
+Y = []
+for t in range(len(series) - T):
+  x = series[t:t+T]
+  X.append(x)
+  y = series[t+T]
+  Y.append(y)
+
+X = np.array(X).reshape(-1, T, 1) # Now the data should be N x T x D
+Y = np.array(Y)
+N = len(X)
+print("X.shape", X.shape, "Y.shape", Y.shape)
+
