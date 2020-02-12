@@ -3,6 +3,7 @@ from keras.losses import categorical_crossentropy, sparse_categorical_crossentro
 from keras.models import Sequential
 from keras.preprocessing.text import Tokenizer
 from keras.utils import to_categorical
+from tensorflow.python.keras import backend as k
 
 
 def _test_model(model, input_shape, output_sequence_length, french_vocab_size):
