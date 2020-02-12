@@ -1,18 +1,18 @@
-# Created by .ignore support plugin (hsz.mobi)
-### Example user template template
-### Example user template
-
 # IntelliJ project files
 .idea
 *.iml
 out
 gen
 
+# Datasets
 *.txt
 ./Naive Bayes/SMSSpamCollection
 ./Naive Bayes/readme
 *__pycache__
 *.csv
 /Machine Translation/data/
-/Machine Translation/logs/
 /Voice to Text/LibriSpeech/
+
+# Logs and Checkpoints
+/Machine Translation/logs/
+/Sentiment Analysis/checkpoints/
