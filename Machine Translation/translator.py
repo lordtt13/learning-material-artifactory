@@ -6,24 +6,21 @@ Created on Sat Dec 28 22:39:12 2019
 """
 
 import collections
-
 import helper
 import numpy as np
 import project_tests as tests
-
-import keras
 import tensorflow as tf
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
-from keras.models import Model, Sequential
-from keras.layers import GRU, Input, Dense, TimeDistributed, Activation, RepeatVector
-from keras.layers import concatenate, add, Bidirectional, LSTM
-from keras.layers.embeddings import Embedding
-from keras.optimizers import Adam
-from keras.losses import sparse_categorical_crossentropy as categorical_crossentropy
 
-from keras.callbacks import TensorBoard
 from time import time
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.layers import GRU, Input, Dense, TimeDistributed, Activation, RepeatVector
+from tensorflow.keras.layers import concatenate, add, Bidirectional, LSTM, Dropout
+from tensorflow.keras.layers import Embedding
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import sparse_categorical_crossentropy
+from tensorflow.python.keras import backend as k
 
 
 # Load English data
@@ -109,8 +106,6 @@ def logits_to_text(logits, tokenizer):
 
     return ' '.join([index_to_words[prediction] for prediction in np.argmax(logits, 1)])
 
-tensorboard = TensorBoard(log_dir="logs/{}".format(time()), histogram_freq=1, write_graph=True)
-
 def simple_model(input_shape, output_sequence_length, english_vocab_size, french_vocab_size):
     """
     Build and train a basic RNN on x and y
@@ -126,7 +121,7 @@ def simple_model(input_shape, output_sequence_length, english_vocab_size, french
                              
     model = Model(input_seq, Activation('softmax')(logits))
 
-    model.compile(loss=categorical_crossentropy,
+    model.compile(loss=sparse_categorical_crossentropy,
                   optimizer=Adam(lr=1e-3),
                   metrics=['accuracy'])
     return model
@@ -146,8 +141,10 @@ simple_rnn_model = simple_model(
 
 simple_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2)
 
+simple_rnn_model.save('models/simple_rnn_model.h5')
+
 # Print prediction(s)
-print(logits_to_text(simple_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
+print(logits_to_text(simple_rnn_model.predict(tmp_x[:1].astype('float32'))[0], french_tokenizer))
 
 def embed_model(input_shape, output_sequence_length, english_vocab_size, french_vocab_size):
     """
@@ -185,7 +182,7 @@ def embed_model(input_shape, output_sequence_length, english_vocab_size, french_
     model = Model(input_seq, Activation('softmax')(logits))
     print(model.summary())
 
-    model.compile(loss=categorical_crossentropy,
+    model.compile(loss=sparse_categorical_crossentropy,
                   optimizer=Adam(lr=learning_rate),
                   metrics=['accuracy'])
     return model    
@@ -204,8 +201,10 @@ embed_rnn_model = embed_model(input_shape = tmp_x.shape,
 
 embed_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2)
 
+embed_rnn_model.save('models/embed_rnn_model.h5')
+
 # Print prediction(s)
-print(logits_to_text(embed_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
+print(logits_to_text(embed_rnn_model.predict(tmp_x[:1].astype('float32'))[0], french_tokenizer))
 
 def bd_model(input_shape, output_sequence_length, english_vocab_size, french_vocab_size):
     """
@@ -243,7 +242,7 @@ def bd_model(input_shape, output_sequence_length, english_vocab_size, french_voc
         
         model = Model(input_seq, Activation('softmax')(logits))
 
-    model.compile(loss=categorical_crossentropy,
+    model.compile(loss=sparse_categorical_crossentropy,
                   optimizer=Adam(lr=learning_rate),
                   metrics=['accuracy'])
   
@@ -265,8 +264,10 @@ print(bd_rnn_model.summary())
 
 bd_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2)
 
+bd_rnn_model.save('models/bd_rnn_model.h5')
+
 # Print prediction(s)
-print(logits_to_text(bd_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
+print(logits_to_text(bd_rnn_model.predict(tmp_x[:1].astype('float32'))[0], french_tokenizer))
 
 def encdec_model(input_shape, output_sequence_length, english_vocab_size, french_vocab_size):
     """
@@ -309,7 +310,7 @@ def encdec_model(input_shape, output_sequence_length, english_vocab_size, french
     
     # Model
     model = Model(encoder_input_seq, Activation('softmax')(logits))
-    model.compile(loss=categorical_crossentropy,
+    model.compile(loss=sparse_categorical_crossentropy,
                   optimizer=Adam(lr=learning_rate),
                   metrics=['accuracy'])
      
@@ -330,7 +331,7 @@ encdec_rnn_model = encdec_model(input_shape = tmp_x.shape,
     
 print(encdec_rnn_model.summary())
 
-encdec_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2, callbacks=[tensorboard]) 
+encdec_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2) 
 
 # Print prediction(s)
 print(logits_to_text(encdec_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
@@ -400,7 +401,7 @@ def model_final(input_shape, output_sequence_length, english_vocab_size, french_
     
     # Model
     model = Model(encoder_input_seq, Activation('softmax')(logits))
-    model.compile(loss=categorical_crossentropy,
+    model.compile(loss=sparse_categorical_crossentropy,
                   optimizer=Adam(lr=learning_rate),
                   metrics=['accuracy'])
     
@@ -424,38 +425,32 @@ print(final_rnn_model.summary(line_length=125))
 
 final_rnn_model.fit(tmp_x, preproc_french_sentences, batch_size=1024, epochs=10, validation_split=0.2)
 
+final_rnn_model.save('models/simple_rnn_model.h5')
+
 # Print prediction(s)
-print(logits_to_text(final_rnn_model.predict(tmp_x[:1])[0], french_tokenizer))
+print(logits_to_text(final_rnn_model.predict(tmp_x[:1].astype('float32'))[0], french_tokenizer))
 
-def final_predictions(x, y, x_tk, y_tk):
-    """
-    Gets predictions using the final model
-    :param x: Preprocessed English data
-    :param y: Preprocessed French data
-    :param x_tk: English tokenizer
-    :param y_tk: French tokenizer
-    """
-    model = model_final(input_shape = x.shape,
-                        output_sequence_length = y.shape[1],
-                        english_vocab_size = len(x_tk.word_index)+1,
-                        french_vocab_size = len(y_tk.word_index)+1)
+model = model_final(input_shape = preproc_english_sentences.shape,
+                    output_sequence_length = preproc_french_sentences.shape[1],
+                    english_vocab_size = len(english_tokenizer.word_index)+1,
+                    french_vocab_size = len(french_tokenizer.word_index)+1)
 
-    model.fit(x, y, batch_size=1024, epochs=20, validation_split=0.2)
-    
-    y_id_to_word = {value: key for key, value in y_tk.word_index.items()}
-    y_id_to_word[0] = '<PAD>'
+model.fit(preproc_english_sentences, preproc_french_sentences, batch_size=1024, epochs=20, validation_split=0.2)
 
-    sentence = 'he saw a old yellow truck'
-    sentence = [x_tk.word_index[word] for word in sentence.split()]
-    sentence = pad_sequences([sentence], maxlen=x.shape[-1], padding='post')
-    sentences = np.array([sentence[0], x[0]])
-    predictions = model.predict(sentences, len(sentences))
+model.save('models/model_final.h5')
 
-    print('Sample 1:')
-    print(' '.join([y_id_to_word[np.argmax(x)] for x in predictions[0]]))
-    print('Il a vu un vieux camion jaune')
-    print('Sample 2:')
-    print(' '.join([y_id_to_word[np.argmax(x)] for x in predictions[1]]))
-    print(' '.join([y_id_to_word[np.max(x)] for x in y[0]]))
+y_id_to_word = {value: key for key, value in french_tokenizer.word_index.items()}
+y_id_to_word[0] = '<PAD>'
 
-final_predictions(preproc_english_sentences, preproc_french_sentences, english_tokenizer, french_tokenizer)
+sentence = 'he saw a old yellow truck'
+sentence = [english_tokenizer.word_index[word] for word in sentence.split()]
+sentence = pad_sequences([sentence], maxlen=x.shape[-1], padding='post')
+sentences = np.array([sentence[0], x[0]])
+predictions = model.predict(sentences.astype('float32'), len(sentences))
+
+print('Sample 1:')
+print(' '.join([y_id_to_word[np.argmax(preproc_english_sentences)] for preproc_english_sentences in predictions[0]]))
+print('Il a vu un vieux camion jaune')
+print('Sample 2:')
+print(' '.join([y_id_to_word[np.argmax(x)] for preproc_english_sentences in predictions[1]]))
+print(' '.join([y_id_to_word[np.max(x)] for preproc_english_sentences in preproc_french_sentences[0]]))
