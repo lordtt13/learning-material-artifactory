@@ -56,3 +56,41 @@ T = data_train.shape[1]
 
 data_test = pad_sequences(sequences_test, maxlen=T)
 print('Shape of data test tensor:', data_test.shape)
+
+# Create the model
+
+# We get to choose embedding dimensionality
+D = 20
+
+# Hidden state dimensionality
+M = 15
+
+# Note: we actually want to the size of the embedding to (V + 1) x D,
+# because the first index starts from 1 and not 0.
+# Thus, if the final index of the embedding matrix is V,
+# then it actually must have size V + 1.
+
+i = Input(shape=(T,))
+x = Embedding(V + 1, D)(i)
+x = LSTM(M, return_sequences=True)(x)
+x = GlobalMaxPooling1D()(x)
+x = Dense(1, activation='sigmoid')(x)
+
+model = Model(i, x)
+
+# Compile and fit
+model.compile(
+  loss='binary_crossentropy',
+  optimizer='adam',
+  metrics=['accuracy']
+)
+
+
+print('Training model...')
+r = model.fit(
+  data_train,
+  Ytrain,
+  epochs=10,
+  validation_data=(data_test, Ytest)
+)
+
