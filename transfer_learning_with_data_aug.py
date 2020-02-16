@@ -64,3 +64,24 @@ valid_image_files = glob(valid_path + '/*/*.jpg')
 folders = glob(train_path + '/*')
 folders
 
+ptm = PretrainedModel(
+    input_shape=IMAGE_SIZE + [3],
+    weights='imagenet',
+    include_top=False)
+
+# freeze pretrained model weights
+ptm.trainable = False
+
+# map the data into feature vectors
+
+# Keras image data generator returns classes one-hot encoded
+
+K = len(folders) # number of classes
+x = Flatten()(ptm.output)
+x = Dense(K, activation='softmax')(x)
+
+# create a model object
+model = Model(inputs=ptm.input, outputs=x)
+
+model.summary()
+
