@@ -130,3 +130,23 @@ r = model.fit_generator(
   validation_steps=int(np.ceil(len(valid_image_files) / batch_size)),
 )
 
+# create a 2nd train generator which does not use data augmentation
+# to get the true train accuracy
+train_generator2 = gen_test.flow_from_directory(
+  train_path,
+  target_size=IMAGE_SIZE,
+  batch_size=batch_size,
+)
+model.evaluate_generator(
+    train_generator2,
+    steps=int(np.ceil(len(image_files) / batch_size)))
+
+plt.plot(r.history['loss'], label='train loss')
+plt.plot(r.history['val_loss'], label='val loss')
+plt.legend()
+plt.show()
+
+plt.plot(r.history['accuracy'], label='train acc')
+plt.plot(r.history['val_accuracy'], label='val acc')
+plt.legend()
+plt.show()
