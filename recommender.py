@@ -96,3 +96,39 @@ x = Dense(1024, activation='relu')(x)
 # x = Dense(400, activation='relu')(x)
 # x = Dense(400, activation='relu')(x)
 x = Dense(1)(x)
+
+model = Model(inputs=[u, m], outputs=x)
+model.compile(
+  loss='mse',
+  optimizer=SGD(lr=0.08, momentum=0.9),
+)
+
+# split the data
+user_ids, movie_ids, ratings = shuffle(user_ids, movie_ids, ratings)
+Ntrain = int(0.8 * len(ratings))
+train_user = user_ids[:Ntrain]
+train_movie = movie_ids[:Ntrain]
+train_ratings = ratings[:Ntrain]
+
+test_user = user_ids[Ntrain:]
+test_movie = movie_ids[Ntrain:]
+test_ratings = ratings[Ntrain:]
+
+# center the ratings
+avg_rating = train_ratings.mean()
+train_ratings = train_ratings - avg_rating
+test_ratings = test_ratings - avg_rating
+
+r = model.fit(
+  x=[train_user, train_movie],
+  y=train_ratings,
+  epochs=25,
+  batch_size=1024,
+  verbose=2, # goes a little faster when you don't print the progress bar
+  validation_data=([test_user, test_movie], test_ratings),
+)
+
+plt.plot(r.history['loss'], label="train loss")
+plt.plot(r.history['val_loss'], label="val loss")
+plt.legend()
+plt.show()
