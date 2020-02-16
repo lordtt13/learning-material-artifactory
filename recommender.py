@@ -62,3 +62,37 @@ df['new_movie_id'] = df.movieId.cat.codes
 user_ids = df['new_user_id'].values
 movie_ids = df['new_movie_id'].values
 ratings = df['rating'].values
+
+# Get number of users and number of movies
+N = len(set(user_ids))
+M = len(set(movie_ids))
+
+# Set embedding dimension
+K = 10
+
+# Make a neural network
+
+# User input
+u = Input(shape=(1,))
+
+# Movie input
+m = Input(shape=(1,))
+
+# User embedding
+u_emb = Embedding(N, K)(u) # output is (num_samples, 1, K)
+
+# Movie embedding
+m_emb = Embedding(M, K)(m) # output is (num_samples, 1, K)
+
+# Flatten both embeddings
+u_emb = Flatten()(u_emb) # now it's (num_samples, K)
+m_emb = Flatten()(m_emb) # now it's (num_samples, K)
+
+# Concatenate user-movie embeddings into a feature vector
+x = Concatenate()([u_emb, m_emb]) # now it's (num_samples, 2K)
+
+# Now that we have a feature vector, it's just a regular ANN
+x = Dense(1024, activation='relu')(x)
+# x = Dense(400, activation='relu')(x)
+# x = Dense(400, activation='relu')(x)
+x = Dense(1)(x)
