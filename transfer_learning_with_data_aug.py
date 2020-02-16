@@ -85,3 +85,48 @@ model = Model(inputs=ptm.input, outputs=x)
 
 model.summary()
 
+# create an instance of ImageDataGenerator
+gen_train = ImageDataGenerator(
+  rotation_range=20,
+  width_shift_range=0.1,
+  height_shift_range=0.1,
+  shear_range=0.1,
+  zoom_range=0.2,
+  horizontal_flip=True,
+  preprocessing_function=preprocess_input
+)
+
+gen_test = ImageDataGenerator(
+  preprocessing_function=preprocess_input
+)
+
+batch_size = 128
+
+# create generators
+train_generator = gen_train.flow_from_directory(
+  train_path,
+  shuffle=True,
+  target_size=IMAGE_SIZE,
+  batch_size=batch_size,
+)
+valid_generator = gen_test.flow_from_directory(
+  valid_path,
+  target_size=IMAGE_SIZE,
+  batch_size=batch_size,
+)
+
+model.compile(
+  loss='categorical_crossentropy',
+  optimizer='adam',
+  metrics=['accuracy']
+)
+
+# fit the model
+r = model.fit_generator(
+  train_generator,
+  validation_data=valid_generator,
+  epochs=10,
+  steps_per_epoch=int(np.ceil(len(image_files) / batch_size)),
+  validation_steps=int(np.ceil(len(valid_image_files) / batch_size)),
+)
+
