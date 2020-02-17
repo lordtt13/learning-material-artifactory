@@ -118,3 +118,25 @@ Y_train = np.zeros(Ntrain)
 X_valid = np.zeros((Nvalid, D))
 Y_valid = np.zeros(Nvalid)
 
+# populate X_train and Y_train
+i = 0
+for x, y in train_generator:
+  # get features
+  features = model.predict(x)
+  
+  # size of the batch (may not always be batch_size)
+  sz = len(y)
+  
+  # assign to X_train and Ytrain
+  X_train[i:i + sz] = features
+  Y_train[i:i + sz] = y
+  
+  # increment i
+  i += sz
+  print(i)
+
+  if i >= Ntrain:
+    print('breaking now')
+    break
+print(i)
+
