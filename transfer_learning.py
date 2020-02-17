@@ -174,3 +174,28 @@ logr.fit(X_train2, Y_train)
 print(logr.score(X_train2, Y_train))
 print(logr.score(X_valid2, Y_valid))
 
+i = Input(shape=(D,))
+x = Dense(1, activation='sigmoid')(i)
+linearmodel = Model(i, x)
+
+linearmodel.compile(
+    loss='binary_crossentropy',
+    optimizer='adam',
+    metrics=['accuracy'])
+
+r = linearmodel.fit(
+    X_train, Y_train,
+    batch_size=128,
+    epochs=10,
+    validation_data=(X_valid, Y_valid),
+)
+
+plt.plot(r.history['loss'], label='train loss')
+plt.plot(r.history['val_loss'], label='val loss')
+plt.legend()
+plt.show()
+
+plt.plot(r.history['accuracy'], label='train acc')
+plt.plot(r.history['val_accuracy'], label='val acc')
+plt.legend()
+plt.show()
