@@ -11,6 +11,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys, os
 
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 from tensorflow.keras.layers import Input, Dense, Flatten
 from tensorflow.keras.applications.vgg16 import VGG16 as PretrainedModel, preprocess_input
 from tensorflow.keras.models import Model
@@ -139,4 +141,36 @@ for x, y in train_generator:
     print('breaking now')
     break
 print(i)
+
+# populate X_valid and Y_valid
+i = 0
+for x, y in valid_generator:
+  # get features
+  features = model.predict(x)
+  
+  # size of the batch (may not always be batch_size)
+  sz = len(y)
+  
+  # assign to X_train and Ytrain
+  X_valid[i:i + sz] = features
+  Y_valid[i:i + sz] = y
+  
+  # increment i
+  i += sz
+
+  if i >= Nvalid:
+    print('breaking now')
+    break
+print(i)
+
+
+scaler = StandardScaler()
+
+X_train2 = scaler.fit_transform(X_train)
+X_valid2 = scaler.transform(X_valid)
+
+logr = LogisticRegression()
+logr.fit(X_train2, Y_train)
+print(logr.score(X_train2, Y_train))
+print(logr.score(X_valid2, Y_valid))
 
