@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys, os
 
+from skimage.io import imread
 from tensorflow.keras.layers import Input, Dense, LeakyReLU, Dropout, \
   BatchNormalization
 from tensorflow.keras.models import Model
@@ -124,3 +125,70 @@ def sample_images(epoch):
       idx += 1
   fig.savefig("gan_images/%d.png" % epoch)
   plt.close()
+  
+# Main training loop
+for epoch in range(epochs):
+  ###########################
+  ### Train discriminator ###
+  ###########################
+  
+  # Select a random batch of images
+  idx = np.random.randint(0, x_train.shape[0], batch_size)
+  real_imgs = x_train[idx]
+  
+  # Generate fake images
+  noise = np.random.randn(batch_size, latent_dim)
+  fake_imgs = generator.predict(noise)
+  
+  # Train the discriminator
+  # both loss and accuracy are returned
+  d_loss_real, d_acc_real = discriminator.train_on_batch(real_imgs, ones)
+  d_loss_fake, d_acc_fake = discriminator.train_on_batch(fake_imgs, zeros)
+  d_loss = 0.5 * (d_loss_real + d_loss_fake)
+  d_acc  = 0.5 * (d_acc_real + d_acc_fake)
+  
+  
+  #######################
+  ### Train generator ###
+  #######################
+  
+  noise = np.random.randn(batch_size, latent_dim)
+  g_loss = combined_model.train_on_batch(noise, ones)
+  
+  # do it again!
+  noise = np.random.randn(batch_size, latent_dim)
+  g_loss = combined_model.train_on_batch(noise, ones)
+  
+  # Save the losses
+  d_losses.append(d_loss)
+  g_losses.append(g_loss)
+  
+  if epoch % 100 == 0:
+    print(f"epoch: {epoch+1}/{epochs}, d_loss: {d_loss:.2f}, \
+      d_acc: {d_acc:.2f}, g_loss: {g_loss:.2f}")
+  
+  if epoch % sample_period == 0:
+    sample_images(epoch)
+    
+plt.plot(g_losses, label='g_losses')
+plt.plot(d_losses, label='d_losses')
+plt.legend()
+
+# Sample images at random epoch ends
+a = imread('gan_images/0.png')
+plt.imshow(a)
+
+a = imread('gan_images/1000.png')
+plt.imshow(a)
+
+a = imread('gan_images/5000.png')
+plt.imshow(a)
+
+a = imread('gan_images/10000.png')
+plt.imshow(a)
+
+a = imread('gan_images/20000.png')
+plt.imshow(a)
+
+a = imread('gan_images/29800.png')
+plt.imshow(a)
