@@ -45,3 +45,11 @@ def build_generator(latent_dim):
 
   model = Model(i, x)
   return model
+
+def build_discriminator(img_size):
+  i = Input(shape=(img_size,))
+  x = Dense(512, activation=LeakyReLU(alpha=0.2))(i)
+  x = Dense(256, activation=LeakyReLU(alpha=0.2))(x)
+  x = Dense(1, activation='sigmoid')(x)
+  model = Model(i, x)
+  return model
