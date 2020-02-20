@@ -84,3 +84,43 @@ combined_model = Model(z, fake_pred)
 
 # Compile the combined model
 combined_model.compile(loss='binary_crossentropy', optimizer=Adam(0.0002, 0.5))
+
+# Train the GAN
+
+# Config
+batch_size = 32
+epochs = 30000
+sample_period = 200 # every `sample_period` steps generate and save some data
+
+
+# Create batch labels to use when calling train_on_batch
+ones = np.ones(batch_size)
+zeros = np.zeros(batch_size)
+
+# Store the losses
+d_losses = []
+g_losses = []
+
+# Create a folder to store generated images
+if not os.path.exists('gan_images'):
+  os.makedirs('gan_images')
+  
+# A function to generate a grid of random samples from the generator
+# and save them to a file
+def sample_images(epoch):
+  rows, cols = 5, 5
+  noise = np.random.randn(rows * cols, latent_dim)
+  imgs = generator.predict(noise)
+
+  # Rescale images 0 - 1
+  imgs = 0.5 * imgs + 0.5
+
+  fig, axs = plt.subplots(rows, cols)
+  idx = 0
+  for i in range(rows):
+    for j in range(cols):
+      axs[i,j].imshow(imgs[idx].reshape(H, W), cmap='gray')
+      axs[i,j].axis('off')
+      idx += 1
+  fig.savefig("gan_images/%d.png" % epoch)
+  plt.close()
