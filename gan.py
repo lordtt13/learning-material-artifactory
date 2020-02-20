@@ -53,3 +53,34 @@ def build_discriminator(img_size):
   x = Dense(1, activation='sigmoid')(x)
   model = Model(i, x)
   return model
+
+# Compile both models in preparation for training
+
+
+# Build and compile the discriminator
+discriminator = build_discriminator(D)
+discriminator.compile(
+    loss='binary_crossentropy',
+    optimizer=Adam(0.0002, 0.5),
+    metrics=['accuracy'])
+
+# Build and compile the combined model
+generator = build_generator(latent_dim)
+
+# Create an input to represent noise sample from latent space
+z = Input(shape=(latent_dim,))
+
+# Pass noise through generator to get an image
+img = generator(z)
+
+# Make sure only the generator is trained
+discriminator.trainable = False
+
+# The true output is fake, but we label them real!
+fake_pred = discriminator(img)
+
+# Create the combined model object
+combined_model = Model(z, fake_pred)
+
+# Compile the combined model
+combined_model.compile(loss='binary_crossentropy', optimizer=Adam(0.0002, 0.5))
