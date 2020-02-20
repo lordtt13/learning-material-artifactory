@@ -32,3 +32,16 @@ x_test = x_test.reshape(-1, D)
 
 # Dimensionality of the latent space
 latent_dim = 100
+
+def build_generator(latent_dim):
+  i = Input(shape=(latent_dim,))
+  x = Dense(256, activation=LeakyReLU(alpha=0.2))(i)
+  x = BatchNormalization(momentum=0.7)(x)
+  x = Dense(512, activation=LeakyReLU(alpha=0.2))(x)
+  x = BatchNormalization(momentum=0.7)(x)
+  x = Dense(1024, activation=LeakyReLU(alpha=0.2))(x)
+  x = BatchNormalization(momentum=0.7)(x)
+  x = Dense(D, activation='tanh')(x)
+
+  model = Model(i, x)
+  return model
