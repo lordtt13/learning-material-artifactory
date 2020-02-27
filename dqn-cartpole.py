@@ -192,3 +192,48 @@ class DQNAgent:
         """decrease the exploration, increase exploitation"""
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+            
+class DDQNAgent(DQNAgent):
+    def __init__(self,
+                 state_space, 
+                 action_space, 
+                 episodes=500):
+        super().__init__(state_space, 
+                         action_space, 
+                         episodes)
+        """DDQN Agent on CartPole-v0 environment
+        Arguments:
+            state_space (tensor): state space
+            action_space (tensor): action space
+            episodes (int): number of episodes to train
+        """
+
+        # Q Network weights filename
+        self.weights_file = 'ddqn_cartpole.h5'
+        print("-------------DDQN------------")
+
+    def get_target_q_value(self, next_state, reward):
+        """compute Q_max
+           Use of target Q Network solves the 
+            non-stationarity problem
+        Arguments:
+            reward (float): reward received after executing
+                action on state
+            next_state (tensor): next state
+        Returns:
+            q_value (float): max Q-value computed
+        """
+        # max Q value among next state's actions
+        # DDQN
+        # current Q Network selects the action
+        # a'_max = argmax_a' Q(s', a')
+        action = np.argmax(self.q_model.predict(next_state)[0])
+        # target Q Network evaluates the action
+        # Q_max = Q_target(s', a'_max)
+        q_value = self.target_q_model.predict(\
+                                      next_state)[0][action]
+
+        # Q_max = reward + gamma * Q_max
+        q_value *= self.gamma
+        q_value += reward
+        return q_value
