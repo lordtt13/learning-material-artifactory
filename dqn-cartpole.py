@@ -237,3 +237,105 @@ class DDQNAgent(DQNAgent):
         q_value *= self.gamma
         q_value += reward
         return q_value
+    
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=None)
+    parser.add_argument('env_id',
+                        nargs='?',
+                        default='CartPole-v0',
+                        help='Select the environment to run')
+    parser.add_argument("-d",
+                        "--ddqn",
+                        action='store_true',
+                        help="Use Double DQN")
+    parser.add_argument("-r",
+                        "--no-render",
+                        action='store_true',
+                        help="Disable rendering (for env w/o graphics")
+    args = parser.parse_args()
+
+    # the number of trials without falling over
+    win_trials = 100
+
+    # the CartPole-v0 is considered solved if 
+    # for 100 consecutive trials, he cart pole has not 
+    # fallen over and it has achieved an average 
+    # reward of 195.0 
+    # a reward of +1 is provided for every timestep 
+    # the pole remains upright
+    win_reward = { 'CartPole-v0' : 195.0 }
+
+    # stores the reward per episode
+    scores = deque(maxlen=win_trials)
+
+    logger.setLevel(logger.ERROR)
+    env = gym.make(args.env_id)
+
+    outdir = "/tmp/dqn-%s" % args.env_id
+    if args.ddqn:
+        outdir = "/tmp/ddqn-%s" % args.env_id
+
+    if args.no_render:
+        env = wrappers.Monitor(env,
+                               directory=outdir,
+                               video_callable=False,
+                               force=True)
+    else:
+        env = wrappers.Monitor(env, directory=outdir, force=True)
+    env.seed(0)
+
+    # instantiate the DQN/DDQN agent
+    if args.ddqn:
+        agent = DDQNAgent(env.observation_space, env.action_space)
+    else:
+        agent = DQNAgent(env.observation_space, env.action_space)
+
+    # should be solved in this number of episodes
+    episode_count = 3000
+    state_size = env.observation_space.shape[0]
+    batch_size = 64
+
+    # by default, CartPole-v0 has max episode steps = 200
+    # you can use this to experiment beyond 200
+    # env._max_episode_steps = 4000
+
+    # Q-Learning sampling and fitting
+    for episode in range(episode_count):
+        state = env.reset()
+        state = np.reshape(state, [1, state_size])
+        done = False
+        total_reward = 0
+        while not done:
+            # in CartPole-v0, action=0 is left and action=1 is right
+            action = agent.act(state)
+            next_state, reward, done, _ = env.step(action)
+            # in CartPole-v0:
+            # state = [pos, vel, theta, angular speed]
+            next_state = np.reshape(next_state, [1, state_size])
+            # store every experience unit in replay buffer
+            agent.remember(state, action, reward, next_state, done)
+            state = next_state
+            total_reward += reward
+
+
+        # call experience relay
+        if len(agent.memory) >= batch_size:
+            agent.replay(batch_size)
+    
+        scores.append(total_reward)
+        mean_score = np.mean(scores)
+        if mean_score >= win_reward[args.env_id] \
+                and episode >= win_trials:
+            print("Solved in episode %d: \
+                   Mean survival = %0.2lf in %d episodes"
+                  % (episode, mean_score, win_trials))
+            print("Epsilon: ", agent.epsilon)
+            agent.save_weights()
+            break
+        if (episode + 1) % win_trials == 0:
+            print("Episode %d: Mean survival = \
+                   %0.2lf in %d episodes" %
+                  ((episode + 1), mean_score, win_trials))
+
+    # close the env and write monitor result info to disk
+    env.close() 
