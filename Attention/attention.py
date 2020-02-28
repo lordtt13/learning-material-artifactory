@@ -4,136 +4,66 @@ Created on Tue Dec 17 21:38:42 2019
 
 @author: tanma
 """
-
-
-import helper
-
-codes = helper.load_data('cipher.txt')
-plaintext = helper.load_data('plaintext.txt')
-
-from keras.preprocessing.text import Tokenizer
-
-
-def tokenize(x):
-    """
-    :param x: List of sentences/strings to be tokenized
-    :return: Tuple of (tokenized x data, tokenizer used to tokenize x)
-    """
-
-    x_tk = Tokenizer(char_level=True)
-    x_tk.fit_on_texts(x)
-
-    return x_tk.texts_to_sequences(x), x_tk
-
-# Tokenize Example output
-text_sentences = [
-    'The quick brown fox jumps over the lazy dog .',
-    'By Jove , my quick study of lexicography won a prize .',
-    'This is a short sentence .']
-text_tokenized, text_tokenizer = tokenize(text_sentences)
-print(text_tokenizer.word_index)
-print()
-for sample_i, (sent, token_sent) in enumerate(zip(text_sentences, text_tokenized)):
-    print('Sequence {} in x'.format(sample_i + 1))
-    print('  Input:  {}'.format(sent))
-    print('  Output: {}'.format(token_sent))
-    
 import numpy as np
-from keras.preprocessing.sequence import pad_sequences
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
-def pad(x, length=None):
-    """
-    :param x: List of sequences.
-    :param length: Length to pad the sequence to.  If None, use length of longest sequence in x.
-    :return: Padded numpy array of sequences
-    """
+dec_hidden_state = [5,1,20]
+
+# Let's visualize our decoder hidden state
+plt.figure(figsize=(1.5, 4.5))
+sns.heatmap(np.transpose(np.matrix(dec_hidden_state)), annot=True, cmap=sns.light_palette("purple", as_cmap=True), linewidths=1)
+
+annotation = [3,12,45] #e.g. Encoder hidden state
+
+# Let's visualize the single annotation
+plt.figure(figsize=(1.5, 4.5))
+sns.heatmap(np.transpose(np.matrix(annotation)), annot=True, cmap=sns.light_palette("orange", as_cmap=True), linewidths=1)
+
+
+def single_dot_attention_score(dec_hidden_state, enc_hidden_state):
+    # Return the dot product of the two vectors
+    return np.dot(dec_hidden_state, enc_hidden_state)
     
-    if length is None:
-        length = max([len(sentence) for sentence in x])
-    return pad_sequences(x, maxlen=length, padding='post')
+single_dot_attention_score(dec_hidden_state, annotation)
 
-# Pad Tokenized output
-test_pad = pad(text_tokenized)
-for sample_i, (token_sent, pad_sent) in enumerate(zip(text_tokenized, test_pad)):
-    print('Sequence {} in x'.format(sample_i + 1))
-    print('  Input:  {}'.format(np.array(token_sent)))
-    print('  Output: {}'.format(pad_sent))
+annotations = np.transpose([[3,12,45], [59,2,5], [1,43,5], [4,3,45.3]])
+
+# Let's visualize our annotation (each column is an annotation)
+ax = sns.heatmap(annotations, annot=True, cmap=sns.light_palette("orange", as_cmap=True), linewidths=1)
+
+def dot_attention_score(dec_hidden_state, annotations):
+    # Return the product of dec_hidden_state transpose and enc_hidden_states
+    return np.matmul(np.transpose(dec_hidden_state), annotations)
     
-def preprocess(x, y):
-    """
-    :param x: Feature List of sentences
-    :param y: Label List of sentences
-    :return: Tuple of (Preprocessed x, Preprocessed y, x tokenizer, y tokenizer)
-    """
-    preprocess_x, x_tk = tokenize(x)
-    preprocess_y, y_tk = tokenize(y)
+attention_weights_raw = dot_attention_score(dec_hidden_state, annotations)
+attention_weights_raw
 
-    preprocess_x = pad(preprocess_x)
-    preprocess_y = pad(preprocess_y)
+def softmax(x):
+    x = np.array(x, dtype=np.float128)
+    e_x = np.exp(x)
+    return e_x / e_x.sum(axis=0) 
 
-    # Keras's sparse_categorical_crossentropy function requires the labels to be in 3 dimensions
-    preprocess_y = preprocess_y.reshape(*preprocess_y.shape, 1)
+attention_weights = softmax(attention_weights_raw)
+attention_weights
 
-    return preprocess_x, preprocess_y, x_tk, y_tk
+def apply_attention_scores(attention_weights, annotations):
+    # Multiple the annotations by their weights
+    return attention_weights * annotations
 
-preproc_code_sentences, preproc_plaintext_sentences, code_tokenizer, plaintext_tokenizer =\
-    preprocess(codes, plaintext)
+applied_attention = apply_attention_scores(attention_weights, annotations)
+applied_attention
 
-print('Data Preprocessed')
+# Let's visualize our annotations after applying attention to them
+ax = sns.heatmap(applied_attention, annot=True, cmap=sns.light_palette("orange", as_cmap=True), linewidths=1)
 
-from keras.layers import GRU, Input, Dense, TimeDistributed
-from keras.models import Model
-from keras.layers import Activation
-from keras.optimizers import Adam
-from keras.losses import sparse_categorical_crossentropy
+def calculate_attention_vector(applied_attention):
+    return np.sum(applied_attention, axis=1)
 
+attention_vector = calculate_attention_vector(applied_attention)
+attention_vector
 
-def simple_model(input_shape, output_sequence_length, code_vocab_size, plaintext_vocab_size):
-    """
-    :param input_shape: Tuple of input shape
-    :param output_sequence_length: Length of output sequence
-    :param code_vocab_size: Number of unique code characters in the dataset
-    :param plaintext_vocab_size: Number of unique plaintext characters in the dataset
-    :return: Keras model built, but not trained
-    """
-    learning_rate = 1e-3
-
-    input_seq = Input(input_shape[1:])
-    rnn = GRU(64, return_sequences=True)(input_seq)
-    logits = TimeDistributed(Dense(plaintext_vocab_size))(rnn)
-
-    model = Model(input_seq, Activation('softmax')(logits))
-    model.compile(loss=sparse_categorical_crossentropy,
-                  optimizer=Adam(learning_rate),
-                  metrics=['accuracy'])
-    return model
-
-
-# Reshaping the input to work with a basic RNN
-tmp_x = pad(preproc_code_sentences, preproc_plaintext_sentences.shape[1])
-tmp_x = tmp_x.reshape((-1, preproc_plaintext_sentences.shape[-2], 1))
-
-simple_rnn_model = simple_model(
-    tmp_x.shape,
-    preproc_plaintext_sentences.shape[1],
-    len(code_tokenizer.word_index)+1,
-    len(plaintext_tokenizer.word_index)+1)
-
-simple_rnn_model.fit(tmp_x, preproc_plaintext_sentences, batch_size=32, epochs=5, validation_split=0.2)
-
-def logits_to_text(logits, tokenizer):
-    """
-    Turn logits from a neural network into text using the tokenizer
-    :param logits: Logits from a neural network
-    :param tokenizer: Keras Tokenizer fit on the labels
-    :return: String that represents the text of the logits
-    """
-    index_to_words = {id: word for word, id in tokenizer.word_index.items()}
-    index_to_words[0] = '<PAD>'
-
-    return ' '.join([index_to_words[prediction] for prediction in np.argmax(logits, 1)])
-
-print('`logits_to_text` function loaded.')
-
-print(logits_to_text(simple_rnn_model.predict(tmp_x[:1])[0], plaintext_tokenizer))
+# Let's visualize the attention context vector
+plt.figure(figsize=(1.5, 4.5))
+sns.heatmap(np.transpose(np.matrix(attention_vector)), annot=True, cmap=sns.light_palette("Blue", as_cmap=True), linewidths=1)
