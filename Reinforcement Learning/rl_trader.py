@@ -50,3 +50,46 @@ class ReplayBuffer:
                 r=self.rews_buf[idxs],
                 d=self.done_buf[idxs])
 
+
+def get_scaler(env):
+  # return scikit-learn scaler object to scale the states
+  # Note: you could also populate the replay buffer here
+
+  states = []
+  for _ in range(env.n_step):
+    action = np.random.choice(env.action_space)
+    state, reward, done, info = env.step(action)
+    states.append(state)
+    if done:
+      break
+
+  scaler = StandardScaler()
+  scaler.fit(states)
+  return scaler
+
+
+def maybe_make_dir(directory):
+  if not os.path.exists(directory):
+    os.makedirs(directory)
+
+
+def mlp(input_dim, n_action, n_hidden_layers=1, hidden_dim=32):
+  """ A multi-layer perceptron """
+
+  # input layer
+  i = Input(shape=(input_dim,))
+  x = i
+
+  # hidden layers
+  for _ in range(n_hidden_layers):
+    x = Dense(hidden_dim, activation='relu')(x)
+  
+  # final layer
+  x = Dense(n_action)(x)
+
+  # make the model
+  model = Model(i, x)
+
+  model.compile(loss='mse', optimizer='adam')
+  print((model.summary()))
+  return model
