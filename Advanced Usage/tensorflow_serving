@@ -134,3 +134,16 @@ print(actual)
 
 for i in range(0,3):
   show(i, f"True: {actual[i]}, Predicted: {pred[i]}")
+  
+  
+# Allows you to select a model by version
+
+headers = {"content-type": "application/json"}
+r = requests.post('http://localhost:8501/v1/models/fashion_model/versions/1:predict', data=data, headers=headers)
+j = r.json()
+pred = np.array(j['predictions'])
+pred = pred.argmax(axis=1)
+pred = [labels[i] for i in pred]
+for i in range(0,3):
+  show(i, f"True: {actual[i]}, Predicted: {pred[i]}")
+  
