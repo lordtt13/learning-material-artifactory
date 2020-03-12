@@ -8,6 +8,7 @@ Created on Fri Mar 13 09:49:04 2020
 
 import os
 import json
+import requests
 import tempfile
 import subprocess
 import numpy as np
@@ -107,3 +108,29 @@ def show(idx, title):
 i = np.random.randint(0, len(x_test))
 show(i, labels[y_test[i]])
 
+# Encode what to predict in json
+data = json.dumps({"signature_name": "serving_default", "instances": x_test[0:3].tolist()})
+
+# Call API and pass json with test data into it
+headers = {"content-type": "application/json"}
+r = requests.post('http://localhost:8501/v1/models/fashion_model:predict', data=data, headers=headers)
+j = r.json()
+print(j.keys())
+print(j)
+
+# 2-D Array of predictions
+pred = np.array(j['predictions'])
+
+# Get the predicted classes
+pred = pred.argmax(axis=1)
+
+# Predicted Labels
+pred = [labels[i] for i in pred]
+print(pred)
+
+# Get the true labels
+actual = [labels[i] for i in y_test[:3]]
+print(actual)
+
+for i in range(0,3):
+  show(i, f"True: {actual[i]}, Predicted: {pred[i]}")
