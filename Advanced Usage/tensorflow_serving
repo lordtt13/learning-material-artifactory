@@ -7,6 +7,7 @@ Created on Fri Mar 13 09:49:04 2020
 """
 
 import os
+import json
 import tempfile
 import subprocess
 import numpy as np
@@ -83,3 +84,26 @@ nohup tensorflow_model_server \
   --model_name=fashion_model \
   --model_base_path="${MODEL_DIR}" >server.log 2>&1
   """
+
+# Label Mapping  
+labels = '''T-shirt/top
+Trouser
+Pullover
+Dress
+Coat
+Sandal
+Shirt
+Sneaker
+Bag
+Ankle boot'''.split("\n")
+
+# See random image from dataset with label
+def show(idx, title):
+  plt.figure()
+  plt.imshow(x_test[idx].reshape(28,28), cmap='gray')
+  plt.axis('off')
+  plt.title('\n\n{}'.format(title), fontdict={'size': 16})
+
+i = np.random.randint(0, len(x_test))
+show(i, labels[y_test[i]])
+
