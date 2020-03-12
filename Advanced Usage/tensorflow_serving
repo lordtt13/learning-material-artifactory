@@ -62,3 +62,24 @@ print('\nSaved model:')
 # !saved_model_cli show --dir {export_path} --all
 # show saved model
 
+"""
+# Tensorflow Serving Module Add
+
+!echo "deb http://storage.googleapis.com/tensorflow-serving-apt stable tensorflow-model-server tensorflow-model-server-universal" | tee /etc/apt/sources.list.d/tensorflow-serving.list && \
+curl https://storage.googleapis.com/tensorflow-serving-apt/tensorflow-serving.release.pub.gpg | apt-key add -
+
+!sudo apt-get install tensorflow-model-server
+
+"""
+
+os.environ["MODEL_DIR"] = MODEL_DIR
+
+"""
+# Start serving on localhost uninterrupted
+
+%%bash --bg 
+nohup tensorflow_model_server \
+  --rest_api_port=8501 \
+  --model_name=fashion_model \
+  --model_base_path="${MODEL_DIR}" >server.log 2>&1
+  """
