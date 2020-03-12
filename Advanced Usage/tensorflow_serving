@@ -7,6 +7,7 @@ Created on Fri Mar 13 09:49:04 2020
 """
 
 import os
+import tempfile
 import subprocess
 import numpy as np
 import tensorflow as tf
@@ -43,4 +44,21 @@ model.compile(optimizer='adam',
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
 r = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=15)
+
+MODEL_DIR = tempfile.gettempdir()
+version = 1
+export_path = os.path.join(MODEL_DIR, str(version))
+print('export_path = {}\n'.format(export_path))
+if os.path.isdir(export_path):
+  print('\nAlready saved a model, cleaning up\n')
+#  !rm -r {export_path}
+
+tf.saved_model.save(model, export_path)
+
+print('\nSaved model:')
+# !ls -l {export_path} 
+# show saved model file
+
+# !saved_model_cli show --dir {export_path} --all
+# show saved model
 
