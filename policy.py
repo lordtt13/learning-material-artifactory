@@ -550,3 +550,60 @@ class A2CAgent(PolicyAgent):
                              batch_size=1,
                              epochs=1,
                              verbose=verbose)
+        
+
+class ActorCriticAgent(PolicyAgent):
+    def __init__(self, env):
+        """Implements the models and training of 
+           Actor Critic policy gradient method
+        Arguments:
+            env (Object): OpenAI gym environment
+        """
+        super().__init__(env) 
+
+
+    def train(self, item, gamma=1.0):
+        """Main routine for training
+        Arguments:
+            item (list) : one experience unit
+            gamma (float) : discount factor [0,1]
+        """
+        [step, state, next_state, reward, done] = item
+
+        # must save state for entropy computation
+        self.state = state
+
+        discount_factor = gamma**step
+
+        # actor-critic: delta = reward - value 
+        #       + discounted_next_value
+        delta = reward - self.value(state)[0] 
+
+        # since this function is called by Actor-Critic
+        # directly, evaluate the value function here
+        if not done:
+            next_value = self.value(next_state)[0]
+            # add  the discounted next value
+            delta += gamma*next_value
+
+        # apply the discount factor as shown in Algortihms
+        # 10.2.1, 10.3.1 and 10.4.1
+        discounted_delta = delta * discount_factor
+        discounted_delta = np.reshape(discounted_delta, [-1, 1])
+        verbose = 1 if done else 0
+
+        # train the logp model (implies training of actor model
+        # as well) since they share exactly the same set of
+        # parameters
+        self.logp_model.fit(np.array(state),
+                            discounted_delta,
+                            batch_size=1,
+                            epochs=1,
+                            verbose=verbose)
+
+        self.value_model.fit(np.array(state),
+                             discounted_delta,
+                             batch_size=1,
+                             epochs=1,
+                             verbose=verbose)
+        
