@@ -708,3 +708,108 @@ def setup_writer(fileid, postfix):
                      'Number of Episodes Solved'])
 
     return csvfile, writer
+
+
+if __name__ == '__main__':
+    args = setup_parser()
+    logger.setLevel(logger.ERROR)
+
+    weights, misc = setup_files(args)
+    actor_weights, encoder_weights, value_weights = weights
+    postfix, fileid, outdir, has_value_model = misc
+
+    env = gym.make(args.env_id)
+    env = wrappers.Monitor(env, directory=outdir, force=True)
+    env.seed(0)
+    
+    # register softplusk activation. just in case the reader wants
+    # to use this activation
+    get_custom_objects().update({'softplusk':Activation(softplusk)})
+   
+    agent, train = setup_agent(env, args)
+
+    if args.train or train:
+        train = True
+        csvfile, writer = setup_writer(fileid, postfix)
+
+    # number of episodes we run the training
+    episode_count = 1000
+    state_dim = env.observation_space.shape[0]
+    n_solved = 0 
+    start_time = datetime.datetime.now()
+    # sampling and fitting
+    for episode in range(episode_count):
+        state = env.reset()
+        # state is car [position, speed]
+        state = np.reshape(state, [1, state_dim])
+        # reset all variables and memory before the start of
+        # every episode
+        step = 0
+        total_reward = 0
+        done = False
+        agent.reset_memory()
+        while not done:
+            # [min, max] action = [-1.0, 1.0]
+            # for baseline, random choice of action will not move
+            # the car pass the flag pole
+            if args.random:
+                action = env.action_space.sample()
+            else:
+                action = agent.act(state)
+            env.render()
+            # after executing the action, get s', r, done
+            next_state, reward, done, _ = env.step(action)
+            next_state = np.reshape(next_state, [1, state_dim])
+            # save the experience unit in memory for training
+            # Actor-Critic does not need this but we keep it anyway.
+            item = [step, state, next_state, reward, done]
+            agent.remember(item)
+
+            if args.actor_critic and train:
+                # only actor-critic performs online training
+                # train at every step as it happens
+                agent.train(item, gamma=0.99)
+            elif not args.random and done and train:
+                # for REINFORCE, REINFORCE with baseline, and A2C
+                # we wait for the completion of the episode before 
+                # training the network(s)
+                # last value as used by A2C
+                if args.a2c:
+                    v = 0 if reward > 0 else agent.value(next_state)[0]
+                    agent.train_by_episode(last_value=v)
+                else:
+                    agent.train_by_episode()
+
+            # accumulate reward
+            total_reward += reward
+            # next state is the new state
+            state = next_state
+            step += 1
+
+        if reward > 0:
+            n_solved += 1
+        elapsed = datetime.datetime.now() - start_time
+        fmt = "Episode=%d, Step=%d, Action=%f, Reward=%f"
+        fmt = fmt + ", Total_Reward=%f, Elapsed=%s"
+        msg = (episode, step, action[0], reward, total_reward, elapsed)
+        print(fmt % msg)
+        # log the data on the opened csv file for analysis
+        if train:
+            writer.writerow([episode, step, total_reward, n_solved])
+
+
+
+    # after training, save the actor and value models weights
+    if not args.random and train:
+        if has_value_model:
+            agent.save_weights(actor_weights,
+                               encoder_weights,
+                               value_weights)
+        else:
+            agent.save_weights(actor_weights,
+                               encoder_weights)
+
+    # close the env and write monitor result info to disk
+    if train:
+        csvfile.close()
+    env.close() 
