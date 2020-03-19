@@ -686,3 +686,25 @@ def setup_agent(env, args):
             agent.load_weights(args.actor_weights)
 
     return agent, train
+
+
+def setup_writer(fileid, postfix):
+    """Use to prepare file and writer for data logging
+    Arguments:
+        fileid (string): unique file identfier
+        postfix (string): path
+    """
+    # we dump episode num, step, total reward, and 
+    # number of episodes solved in a csv file for analysis
+    csvfilename = "%s.csv" % fileid
+    csvfilename = os.path.join(postfix, csvfilename)
+    csvfile = open(csvfilename, 'w', 1)
+    writer = csv.writer(csvfile,
+                        delimiter=',',
+                        quoting=csv.QUOTE_NONNUMERIC)
+    writer.writerow(['Episode',
+                     'Step',
+                     'Total Reward',
+                     'Number of Episodes Solved'])
+
+    return csvfile, writer
