@@ -355,3 +355,71 @@ class PolicyAgent:
         """
         entropy = self.entropy_model.predict(state)
         return entropy[0]
+
+
+class REINFORCEAgent(PolicyAgent):
+    def __init__(self, env):
+        """Implements the models and training of 
+           REINFORCE policy gradient method
+        Arguments:
+            env (Object): OpenAI gym environment
+        """
+        super().__init__(env) 
+
+    def train_by_episode(self):
+        """Train by episode
+           Prepare the dataset before the step by step training
+        """
+        # only REINFORCE and REINFORCE with baseline
+        # use the ff code
+        # convert the rewards to returns
+        rewards = []
+        gamma = 0.99
+        for item in self.memory:
+            [_, _, _, reward, _] = item
+            rewards.append(reward)
+        # rewards = np.array(self.memory)[:,3].tolist()
+
+        # compute return per step
+        # return is the sum of rewards from t til end of episode
+        # return replaces reward in the list
+        for i in range(len(rewards)):
+            reward = rewards[i:]
+            horizon = len(reward)
+            discount =  [math.pow(gamma, t) for t in range(horizon)]
+            return_ = np.dot(reward, discount)
+            self.memory[i][3] = return_
+
+        # train every step
+        for item in self.memory:
+            self.train(item, gamma=gamma)
+
+
+    def train(self, item, gamma=1.0):
+        """Main routine for training 
+        Arguments:
+            item (list) : one experience unit
+            gamma (float) : discount factor [0,1]
+        """
+        [step, state, next_state, reward, done] = item
+
+        # must save state for entropy computation
+        self.state = state
+
+        discount_factor = gamma**step
+        delta = reward
+
+        # apply the discount factor as shown in Algortihms
+        # 10.2.1, 10.3.1 and 10.4.1
+        discounted_delta = delta * discount_factor
+        discounted_delta = np.reshape(discounted_delta, [-1, 1])
+        verbose = 1 if done else 0
+
+        # train the logp model (implies training of actor model
+        # as well) since they share exactly the same set of
+        # parameters
+        self.logp_model.fit(np.array(state),
+                            discounted_delta,
+                            batch_size=1,
+                            epochs=1,
+                            verbose=verbose)
