@@ -607,3 +607,40 @@ class ActorCriticAgent(PolicyAgent):
                              epochs=1,
                              verbose=verbose)
         
+def setup_parser():
+    parser = argparse.ArgumentParser(description=None)
+    parser.add_argument('env_id',
+                        nargs='?',
+                        default='MountainCarContinuous-v0',
+                        help='Select the environment to run')
+    parser.add_argument("-b",
+                        "--baseline",
+                        action='store_true',
+                        help="Reinforce with baseline")
+    parser.add_argument("-a",
+                        "--actor-critic",
+                        action='store_true',
+                        help="Actor-Critic")
+    parser.add_argument("-c",
+                        "--a2c",
+                        action='store_true',
+                        help="Advantage-Actor-Critic (A2C)")
+    parser.add_argument("-r",
+                        "--random",
+                        action='store_true',
+                        help="Random action policy")
+    parser.add_argument("-w",
+                        "--actor-weights",
+                        help="Load pre-trained actor model weights")
+    parser.add_argument("-y",
+                        "--value-weights",
+                        help="Load pre-trained value model weights")
+    parser.add_argument("-e",
+                        "--encoder-weights",
+                        help="Load pre-trained encoder model weights")
+    parser.add_argument("-t",
+                        "--train",
+                        help="Enable training",
+                        action='store_true')
+    args = parser.parse_args()
+    return args
