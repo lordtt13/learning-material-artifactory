@@ -644,3 +644,45 @@ def setup_parser():
                         action='store_true')
     args = parser.parse_args()
     return args
+
+
+def setup_agent(env, args):
+    """Agent initialization
+    Arguments:
+        env (Object): OpenAI environment
+        args : user-defined arguments
+    """
+    # instantiate agent
+    if args.baseline:
+        agent = REINFORCEBaselineAgent(env)
+    elif args.a2c:
+        agent = A2CAgent(env)
+    elif args.actor_critic:
+        agent = ActorCriticAgent(env)
+    else:
+        agent = REINFORCEAgent(env)
+
+    # if weights are given, lets load them
+    if args.encoder_weights:
+        agent.load_encoder_weights(args.encoder_weights)
+    else:
+        x_train = [env.observation_space.sample() \
+                   for x in range(200000)]
+        x_train = np.array(x_train)
+        x_test = [env.observation_space.sample() \
+                  for x in range(20000)]
+        x_test = np.array(x_test)
+        agent.train_autoencoder(x_train, x_test)
+
+    agent.build_actor_critic()
+    train = True
+    # if weights are given, lets load them
+    if args.actor_weights:
+        train = False
+        if args.value_weights:
+            agent.load_weights(args.actor_weights,
+                               args.value_weights)
+        else:
+            agent.load_weights(args.actor_weights)
+
+    return agent, train
