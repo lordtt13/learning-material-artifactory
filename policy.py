@@ -510,3 +510,43 @@ class A2CAgent(PolicyAgent):
             # train per step
             # a2c reward has been discounted
             self.train(item)
+
+
+    def train(self, item, gamma=1.0):
+        """Main routine for training 
+        Arguments:
+            item (list) : one experience unit
+            gamma (float) : discount factor [0,1]
+        """
+        [step, state, next_state, reward, done] = item
+
+        # must save state for entropy computation
+        self.state = state
+
+        discount_factor = gamma**step
+
+        # a2c: delta = discounted_reward - value
+        delta = reward - self.value(state)[0] 
+
+        verbose = 1 if done else 0
+
+        # in A2C, the target value is the return (reward
+        # replaced by return in the train_by_episode function)
+        discounted_delta = reward
+        discounted_delta = np.reshape(discounted_delta, [-1, 1])
+
+        # train the logp model (implies training of actor model
+        # as well) since they share exactly the same set of
+        # parameters
+        self.logp_model.fit(np.array(state),
+                            discounted_delta,
+                            batch_size=1,
+                            epochs=1,
+                            verbose=verbose)
+        
+        # train the value network (critic)
+        self.value_model.fit(np.array(state),
+                             discounted_delta,
+                             batch_size=1,
+                             epochs=1,
+                             verbose=verbose)
