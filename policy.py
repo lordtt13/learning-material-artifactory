@@ -710,6 +710,49 @@ def setup_writer(fileid, postfix):
     return csvfile, writer
 
 
+def setup_files(args):
+    """Housekeeping to keep the output logs in separate folders
+    Arguments:
+        args: user-defined arguments
+    """
+    postfix = 'reinforce'
+    has_value_model = False
+    if args.baseline:
+        postfix = "reinforce-baseline"
+        has_value_model = True
+    elif args.actor_critic:
+        postfix = "actor-critic"
+        has_value_model = True
+    elif args.a2c:
+        postfix = "a2c"
+        has_value_model = True
+    elif args.random:
+        postfix = "random"
+
+    # create the folder for log files
+    try:
+        os.mkdir(postfix)
+    except FileExistsError:
+        print(postfix, " folder exists")
+
+    fileid = "%s-%d" % (postfix, int(time.time()))
+    actor_weights = "actor_weights-%s.h5" % fileid
+    actor_weights = os.path.join(postfix, actor_weights)
+    encoder_weights = "encoder_weights-%s.h5" % fileid
+    encoder_weights = os.path.join(postfix, encoder_weights)
+    value_weights = None
+    if has_value_model:
+        value_weights = "value_weights-%s.h5" % fileid
+        value_weights = os.path.join(postfix, value_weights)
+
+    outdir = "/tmp/%s" % postfix
+
+    misc = (postfix, fileid, outdir, has_value_model)
+    weights = (actor_weights, encoder_weights, value_weights)
+
+    return weights, misc
+
+
 if __name__ == '__main__':
     args = setup_parser()
     logger.setLevel(logger.ERROR)
