@@ -473,3 +473,40 @@ class REINFORCEBaselineAgent(REINFORCEAgent):
                              batch_size=1,
                              epochs=1,
                              verbose=verbose)
+        
+
+class A2CAgent(PolicyAgent):
+    def __init__(self, env):
+        """Implements the models and training of 
+           A2C policy gradient method
+        Arguments:
+            env (Object): OpenAI gym environment
+        """
+        super().__init__(env) 
+        # beta of entropy used in A2C
+        self.beta = 0.9
+        # loss function of A2C value_model is mse
+        self.loss = 'mse'
+
+
+    def train_by_episode(self, last_value=0):
+        """Train by episode 
+           Prepare the dataset before the step by step training
+        Arguments:
+            last_value (float): previous prediction of value net
+        """
+        # implements A2C training from the last state
+        # to the first state
+        # discount factor
+        gamma = 0.95
+        r = last_value
+        # the memory is visited in reverse as shown
+        # in Algorithm 10.5.1
+        for item in self.memory[::-1]:
+            [step, state, next_state, reward, done] = item
+            # compute the return
+            r = reward + gamma*r
+            item = [step, state, next_state, r, done]
+            # train per step
+            # a2c reward has been discounted
+            self.train(item)
