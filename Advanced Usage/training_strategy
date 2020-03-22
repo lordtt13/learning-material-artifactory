@@ -50,3 +50,23 @@ def create_model():
   model = Model(i, x)
   return model
 
+strategy = tf.distribute.MirroredStrategy()
+# strategy = tf.distribute.experimental.CentralStorageStrategy()
+
+print(f'Number of devices: {strategy.num_replicas_in_sync}')
+
+with strategy.scope():
+  model = create_model()
+
+  model.compile(loss='sparse_categorical_crossentropy',
+                optimizer='adam',
+                metrics=['accuracy'])
+  
+r = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
+
+# Compare this to non-distributed training
+model2 = create_model()
+model2.compile(loss='sparse_categorical_crossentropy',
+                optimizer='adam',
+                metrics=['accuracy'])
+r = model2.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
