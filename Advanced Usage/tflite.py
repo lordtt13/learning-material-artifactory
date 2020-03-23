@@ -27,3 +27,16 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 r = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=10)
+
+
+# Convert the model to TFLite format
+
+# Create a converter object
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+
+# Convert the model
+tflite_model = converter.convert()
+
+# Save to file
+with open("converted_model.tflite", "wb") as f:
+  f.write(tflite_model)
