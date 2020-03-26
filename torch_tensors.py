@@ -89,3 +89,16 @@ print(x)
 x = torch.linspace(0,18,12).reshape(3,4)
 print(x)
 
+
+"""
+Changing the dtype of existing tensors
+Don't be tempted to use x = torch.tensor(x, dtype=torch.type) as it will raise an error about improper use of tensor cloning.
+Instead, use the tensor .type() method.
+"""
+
+print('Old:', x.type())
+
+x = x.type(torch.int64)
+
+print('New:', x.type())
+
