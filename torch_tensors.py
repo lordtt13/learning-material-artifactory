@@ -65,3 +65,27 @@ print(b, b.type())
 c = torch.tensor(data, dtype=torch.long)
 print(c, c.type())
 
+
+"""
+Creating tensors from scratch
+Uninitialized tensors with .empty()
+torch.empty() returns an uninitialized tensor. 
+Essentially a block of memory is allocated according to the size of the tensor, and any values already sitting in the block are returned. 
+This is similar to the behavior of numpy.empty().
+"""
+
+x = torch.empty(4, 3)
+print(x)
+
+x = torch.zeros(4, 3, dtype=torch.int64)
+print(x)
+
+x = torch.ones(4, 3, dtype = torch.int32)
+print(x)
+
+x = torch.arange(0,18,2).reshape(3,3)
+print(x)
+
+x = torch.linspace(0,18,12).reshape(3,4)
+print(x)
+
