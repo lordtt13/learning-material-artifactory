@@ -102,3 +102,49 @@ x = x.type(torch.int64)
 
 print('New:', x.type())
 
+
+"""
+Random number tensors
+torch.rand(size) returns random samples from a uniform distribution over [0, 1)
+torch.randn(size) returns samples from the "standard normal" distribution [σ = 1]
+Unlike rand which is uniform, values closer to zero are more likely to appear.
+torch.randint(low,high,size) returns random integers from low (inclusive) to high (exclusive)
+"""
+
+x = torch.rand(4, 3)
+print(x)
+
+x = torch.randn(4, 3)
+print(x)
+
+x = torch.randint(0, 5, (4, 3))
+print(x)
+
+
+"""
+Random number tensors that follow the input size
+torch.rand_like(input)
+torch.randn_like(input)
+torch.randint_like(input,low,high)
+these return random number tensors with the same size as input
+"""
+
+x = torch.zeros(2,5)
+print(x, x.shape)
+
+x2 = torch.randn_like(x)
+print(x2, x2.shape)
+
+"""
+The same syntax can be used with
+torch.zeros_like(input)
+torch.ones_like(input)
+"""
+
+x3 = torch.ones_like(x2)
+print(x3, x3.shape)
+
+# Setting Random Seed
+torch.manual_seed(42)
+x = torch.rand(2, 3)
+print(x)
