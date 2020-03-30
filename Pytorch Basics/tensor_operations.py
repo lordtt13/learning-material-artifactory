@@ -94,3 +94,13 @@ t2 = torch.randn(4, 5)
 print(torch.matmul(t1, t2).size())
 
 # However, the same operation raises a RuntimeError with torch.mm()
+
+# L2 norm
+
+x = torch.tensor([2.,5.,8.,14.])
+x.norm()
+
+# Number of Elements
+
+x = torch.ones(3,7)
+x.numel()
