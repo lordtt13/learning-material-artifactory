@@ -63,3 +63,34 @@ print(result)
 a.add_(b)  # equivalent to a=torch.add(a,b)
 print(a)
 
+# Dot Product
+
+print(a.mul(b)) 
+print(a.dot(b))
+
+# Matrix Multiplication
+
+a = torch.tensor([[0,2,4],[1,3,5]], dtype=torch.float)
+b = torch.tensor([[6,7],[8,9],[10,11]], dtype=torch.float)
+
+print('a: ',a.size())
+print('b: ',b.size())
+print('a x b: ',torch.mm(a,b).size())
+
+# Same things
+
+print(torch.mm(a,b))
+print(a.mm(b))
+print(a @ b)
+
+"""
+Matrix multiplication with broadcasting
+Matrix multiplication that involves broadcasting can be computed using torch.matmul(a,b) or a.matmul(b) or a @ b
+"""
+
+t1 = torch.randn(2, 3, 4)
+t2 = torch.randn(4, 5)
+
+print(torch.matmul(t1, t2).size())
+
+# However, the same operation raises a RuntimeError with torch.mm()
