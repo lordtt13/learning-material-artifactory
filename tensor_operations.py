@@ -48,3 +48,18 @@ view_as(input) only works with tensors that have the same number of elements.
 
 x.view_as(z)
 
+# Tensor Arithmetic
+
+a = torch.tensor([1,2,3], dtype=torch.float)
+b = torch.tensor([4,5,6], dtype=torch.float)
+print(a + b)
+
+print(torch.add(a, b))
+
+result = torch.empty(3)
+torch.add(a, b, out=result)  # equivalent to result=torch.add(a,b)
+print(result)
+
+a.add_(b)  # equivalent to a=torch.add(a,b)
+print(a)
+
