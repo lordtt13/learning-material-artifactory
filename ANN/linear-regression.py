@@ -29,3 +29,28 @@ plt.scatter(X.numpy(), y.numpy())
 plt.ylabel('y')
 plt.xlabel('x')
 
+# Simple Linear Model
+model = nn.Linear(in_features=1, out_features=1)
+print(model.weight)
+print(model.bias)
+
+
+class Model(nn.Module):
+    def __init__(self, in_features, out_features):
+        super(Model, self).__init__()
+        self.linear = nn.Linear(in_features, out_features)
+        
+    def forward(self, x):
+        y_pred = self.linear(x)
+        return y_pred
+    
+
+# Model Definition
+model = Model(1, 1)
+print(model)
+print('Weight:', model.linear.weight.item())
+print('Bias:  ', model.linear.bias.item())
+    
+# Naive prediction
+x = torch.tensor([2.0])
+print(model.forward(x)) 
