@@ -28,6 +28,7 @@ print(y.shape)
 plt.scatter(X.numpy(), y.numpy())
 plt.ylabel('y')
 plt.xlabel('x')
+plt.plot()
 
 # Simple Linear Model
 model = nn.Linear(in_features=1, out_features=1)
@@ -53,4 +54,21 @@ print('Bias:  ', model.linear.bias.item())
     
 # Naive prediction
 x = torch.tensor([2.0])
-print(model.forward(x)) 
+print(model.forward(x))
+
+# Plot initial Model
+x1 = np.array([X.min(),X.max()])
+print(x1)
+
+w1,b1 = model.linear.weight.item(), model.linear.bias.item()
+print(f'Initial weight: {w1:.8f}, Initial bias: {b1:.8f}')
+
+y1 = x1*w1 + b1
+print(y1) 
+
+plt.scatter(X.numpy(), y.numpy())
+plt.plot(x1,y1,'r')
+plt.title('Initial Model')
+plt.ylabel('y')
+plt.xlabel('x')
+plt.plot()
