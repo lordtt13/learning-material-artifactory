@@ -5,14 +5,13 @@ Created on Tue Mar 31 06:33:14 2020
 
 @author: tanmay
 """
-
-
 import torch
 import pandas as pd
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 
+from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 
@@ -56,3 +55,44 @@ testloader = DataLoader(X_test, batch_size=60, shuffle=False)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
+
+# Training
+epochs = 100
+losses = []
+
+for i in tqdm(range(epochs)):
+    i+=1
+    y_pred = model.forward(X_train)
+    loss = criterion(y_pred, y_train)
+    losses.append(loss)
+    
+    # a neat trick to save screen space:
+    if i%5 == 1:
+        print(f'epoch: {i:2}  loss: {loss.item():10.8f}')
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    
+
+# Plot Loss
+plt.plot(range(epochs), losses)
+plt.ylabel('Loss')
+plt.xlabel('epoch')
+plt.plot()
+
+# Eval
+with torch.no_grad():
+    y_val = model.forward(X_test)
+    loss = criterion(y_val, y_test)
+print(f'{loss:.8f}')
+
+correct = 0
+with torch.no_grad():
+    for i,data in enumerate(X_test):
+        y_val = model.forward(data)
+        print(f'{i+1:2}. {str(y_val.argmax().item()):3}  {y_test[i]}')
+        if y_val.argmax().item() == y_test[i]:
+            correct += 1
+
+print(f'\n{correct} out of {len(y_test)} = {100*correct/len(y_test):.2f}% correct')
