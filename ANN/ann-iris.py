@@ -36,6 +36,8 @@ model = Model()
 
 df = pd.read_csv('../Data/iris.csv')
 
+labels = ['Iris setosa','Iris virginica','Iris versicolor','Mystery iris']
+
 X = df.drop('target',axis=1).values
 y = df['target'].values
 
@@ -96,3 +98,24 @@ with torch.no_grad():
             correct += 1
 
 print(f'\n{correct} out of {len(y_test)} = {100*correct/len(y_test):.2f}% correct')
+
+# Save Model
+torch.save(model.state_dict(), 'IrisDatasetModel.pt')
+
+# Load Model
+new_model = Model()
+new_model.load_state_dict(torch.load('IrisDatasetModel.pt'))
+new_model.eval()
+
+with torch.no_grad():
+    y_val = new_model.forward(X_test)
+    loss = criterion(y_val, y_test)
+print(f'{loss:.8f}')
+
+# Eval on unseen data
+mystery_iris = torch.tensor([5.6,3.7,2.2,0.5])
+
+with torch.no_grad():
+    print(new_model(mystery_iris))
+    print()
+    print(labels[new_model(mystery_iris).argmax()])
