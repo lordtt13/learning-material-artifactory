@@ -5,14 +5,12 @@ Created on Mon Mar 30 06:05:01 2020
 
 @author: tanmay
 """
-
-
 import torch
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
+from torch.utils.data import TensorDataset, DataLoader
 
 
 df = pd.read_csv('../Data/iris.csv')
@@ -40,6 +38,7 @@ for i, ax in enumerate(axes.flat):
 fig.legend(labels = labels, loc = 3, bbox_to_anchor = (1.0,0.85))
 plt.show()
 
+# Dataset Setup
 train_X, test_X, train_y, test_y = train_test_split(df.drop('target',axis=1).values,
                                                     df['target'].values, test_size = 0.2,
                                                     random_state = 42)
@@ -56,3 +55,24 @@ print(f'Labels: {labels}\nCounts: {counts}')
 X_train.size()
 
 y_train.size()
+
+data = df.drop('target',axis=1).values
+labels = df['target'].values
+
+# Set up a Torch Dataset object
+iris = TensorDataset(torch.FloatTensor(data),torch.LongTensor(labels))
+
+len(iris), type(iris)
+
+# Once we have a dataset we can wrap it with a DataLoader. This gives us a powerful sampler that provides single- or multi-process iterators over the dataset.
+iris_loader = DataLoader(iris, batch_size = 105, shuffle = True)
+
+for i_batch, sample_batched in enumerate(iris_loader):
+    print(i_batch, sample_batched)
+    break
+
+# Subscript into the generator, first index is for batch_number, second index is for training data or labels, then count unique items
+list(iris_loader)[0][1].bincount()
+
+# Check next item in generator
+next(iter(iris_loader))
