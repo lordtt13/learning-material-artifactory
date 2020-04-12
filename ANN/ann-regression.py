@@ -6,12 +6,15 @@ Created on Sat Apr 11 17:30:45 2020
 @author: tanmay
 """
 
+import time
 import torch
 import torch.nn as nn
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
 
 
 # Visualize the dataset
@@ -176,3 +179,69 @@ class TabularModel(nn.Module):
         x = torch.cat([x, x_cont], 1)
         x = self.layers(x)
         return x
+    
+model = TabularModel(emb_szs, conts.shape[1], 1, [200,100], p = 0.4)
+
+# summary
+model
+
+# Define loss and optimizer
+criterion = nn.MSELoss() 
+optimizer = torch.optim.Adam(model.parameters(), lr = 0.001)
+
+# Perform train/test splits
+batch_size = 60000
+test_size = int(batch_size * .2)
+
+cat_train = cats[:batch_size-test_size]
+cat_test = cats[batch_size-test_size:batch_size]
+con_train = conts[:batch_size-test_size]
+con_test = conts[batch_size-test_size:batch_size]
+y_train = y[:batch_size-test_size]
+y_test = y[batch_size-test_size:batch_size]
+
+len(cat_train), len(cat_test)
+
+
+start_time = time.time()
+
+epochs = 300
+losses = []
+
+# Train the model
+for i in range(epochs):
+    i += 1
+    y_pred = model(cat_train, con_train)
+    loss = torch.sqrt(criterion(y_pred, y_train)) # RMSE
+    losses.append(loss)
+    
+    # a neat trick to save screen space:
+    if i%25 == 1:
+        print(f'epoch: {i:3}  loss: {loss.item():10.8f}')
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+print(f'epoch: {i:3}  loss: {loss.item():10.8f}') # print the last line
+print(f'\nDuration: {time.time() - start_time:.0f} seconds') # print the time elapsed
+
+# Plot metrics
+plt.plot(range(epochs), losses)
+plt.ylabel('RMSE Loss')
+plt.xlabel('epoch')
+plt.show()
+
+# Validate the model
+# TO EVALUATE THE ENTIRE TEST SET
+with torch.no_grad():
+    y_val = model(cat_test, con_test)
+    loss = torch.sqrt(criterion(y_val, y_test))
+print(f'RMSE: {loss:.8f}')
+
+# Look at the first 50 predicted values
+print(f'{"PREDICTED":>12} {"ACTUAL":>8} {"DIFF":>8}')
+for i in range(50):
+    diff = np.abs(y_val[i].item()-y_test[i].item())
+    print(f'{i+1:2}. {y_val[i].item():8.4f} {y_test[i].item():8.4f} {diff:8.4f}')
+    
