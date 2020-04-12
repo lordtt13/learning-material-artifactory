@@ -104,3 +104,39 @@ y[:5]
 
 # Check shape
 cats.shape, conts.shape, y.shape
+
+
+# Set an embedding size
+cat_szs = [len(df[col].cat.categories) for col in cat_cols]
+emb_szs = [(size, min(50, (size+1)//2)) for size in cat_szs]
+emb_szs
+
+catz = cats[:4]
+catz
+
+# This is passed in when the model is instantiated
+emb_szs
+
+# This is assigned inside the __init__() method
+selfembeds = nn.ModuleList([nn.Embedding(ni, nf) for ni,nf in emb_szs])
+selfembeds
+
+# Visualize the layers
+list(enumerate(selfembeds))
+
+# This happens inside the forward() method
+embeddingz = []
+for i,e in enumerate(selfembeds):
+    embeddingz.append(e(catz[:,i]))
+    
+embeddingz
+
+# We concatenate the embedding sections (12,1,4) into one (17)
+z = torch.cat(embeddingz, 1)
+z
+
+# This was assigned under the __init__() method
+selfembdrop = nn.Dropout(.4)
+
+z = selfembdrop(z)
+z
