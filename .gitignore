@@ -1,0 +1,11 @@
+*__pycache__
+*ipynb_checkpoints/
+
+# Datasets Skipped
+*.csv
+*.txt
+
+# Models Skipped
+*.h5
+*.hdf5
+*.model
