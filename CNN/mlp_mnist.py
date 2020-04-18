@@ -59,3 +59,33 @@ plt.figure(figsize = (10,4))
 # We need to transpose the images from CWH to WHC
 plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
 
+# Define Model (MLP for CNN)
+class MultilayerPerceptron(nn.Module):
+    def __init__(self, in_sz = 784, out_sz = 10, layers = [120,84]):
+        super().__init__()
+        self.fc1 = nn.Linear(in_sz,layers[0])
+        self.fc2 = nn.Linear(layers[0],layers[1])
+        self.fc3 = nn.Linear(layers[1],out_sz)
+    
+    def forward(self,X):
+        X = F.relu(self.fc1(X))
+        X = F.relu(self.fc2(X))
+        X = self.fc3(X)
+        return F.log_softmax(X, dim = 1)
+    
+model = MultilayerPerceptron()
+model
+
+def count_parameters(model):
+    params = [p.numel() for p in model.parameters() if p.requires_grad]
+    for item in params:
+        print(f'{item:>6}')
+    print(f'______\n{sum(params):>6}')
+    
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr = 0.001)
+
+# Flatten the training data for mlp
+for images, labels in train_loader:
+    print('Batch shape:', images.size())
+    break
