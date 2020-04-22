@@ -9,3 +9,6 @@
 *.h5
 *.hdf5
 *.model
+
+# Binaries Skipped
+*.p
