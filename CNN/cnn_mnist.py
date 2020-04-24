@@ -10,7 +10,6 @@ import time
 import torch
 
 import numpy as np
-import pandas as pd
 import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
@@ -139,3 +138,63 @@ plt.plot([t/100 for t in test_correct], label = 'validation accuracy')
 plt.title('Accuracy at the end of each epoch')
 plt.legend()
 plt.show()
+
+# Evaluate Test Data
+
+test_load_all = DataLoader(test_data, batch_size = 10000, shuffle = False)
+
+with torch.no_grad():
+    correct = 0
+    for X_test, y_test in test_load_all:
+        y_val = model(X_test)  
+        predicted = torch.max(y_val,1)[1]
+        correct += (predicted == y_test).sum()
+print(f'Test accuracy: {correct.item()}/{len(test_data)} = {correct.item()*100/(len(test_data)):7.3f}%')
+
+# Display the confusion matrix
+
+# print a row of values for reference
+np.set_printoptions(formatter = dict(int = lambda x: f'{x:4}'))
+print(np.arange(10).reshape(1,10))
+print()
+
+# print the confusion matrix
+print(confusion_matrix(predicted.view(-1), y_test.view(-1)))
+
+# Examine the misses
+
+misses = np.array([])
+for i in range(len(predicted.view(-1))):
+    if predicted[i] != y_test[i]:
+        misses = np.append(misses,i).astype('int64')
+        
+# Display the number of misses
+len(misses)
+
+# Display the first 10 index positions
+misses[:10]
+
+# Set up an iterator to feed batched rows
+r = 12   # row size
+row = iter(np.array_split(misses,len(misses)//r+1))
+
+nextrow = next(row)
+print("Index:", nextrow)
+print("Label:", y_test.index_select(0,torch.tensor(nextrow)).numpy())
+print("Guess:", predicted.index_select(0,torch.tensor(nextrow)).numpy())
+
+images = X_test.index_select(0,torch.tensor(nextrow))
+im = make_grid(images, nrow = r)
+plt.figure(figsize = (10,4))
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+# Run a new image through the model
+
+x = 2019
+plt.figure(figsize = (1,1))
+plt.imshow(test_data[x][0].reshape((28,28)), cmap = "gist_yarg")
+
+model.eval()
+with torch.no_grad():
+    new_pred = model(test_data[x][0].view(1,1,28,28)).argmax()
+print("Predicted value:",new_pred.item())
