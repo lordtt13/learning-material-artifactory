@@ -162,3 +162,61 @@ plt.title('Accuracy at the end of each epoch')
 plt.legend()
 plt.show()
 
+# Evaluate test data
+
+print(test_correct) 
+print()
+print(f'Test accuracy: {test_correct[-1].item()*100/10000:.3f}%')
+
+# Display Confusion Matrix
+
+test_load_all = DataLoader(test_data, batch_size = 10000, shuffle = False)
+
+with torch.no_grad():
+    correct = 0
+    for X_test, y_test in test_load_all:
+        y_val = model(X_test)
+        predicted = torch.max(y_val,1)[1]
+        correct += (predicted == y_test).sum()
+
+arr = confusion_matrix(y_test.view(-1), predicted.view(-1))
+df_cm = pd.DataFrame(arr, class_names, class_names)
+plt.figure(figsize = (9,6))
+sn.heatmap(df_cm, annot = True, fmt = "d", cmap = 'BuGn')
+plt.xlabel("prediction")
+plt.ylabel("label (ground truth)")
+plt.show()
+
+# Examine the misses
+
+misses = np.array([])
+for i in range(len(predicted.view(-1))):
+    if predicted[i] != y_test[i]:
+        misses = np.append(misses,i).astype('int64')
+        
+# Display the number of misses
+len(misses)
+
+# Display the first 8 index positions
+misses[:8]
+
+# Set up an iterator to feed batched rows
+r = 8   # row size
+row = iter(np.array_split(misses,len(misses)//r+1))
+
+np.set_printoptions(formatter=dict(int=lambda x: f'{x:5}')) # to widen the printed array
+
+nextrow = next(row)
+lbls = y_test.index_select(0,torch.tensor(nextrow)).numpy()
+gues = predicted.index_select(0,torch.tensor(nextrow)).numpy()
+print("Index:", nextrow)
+print("Label:", lbls)
+print("Class: ", *np.array([class_names[i] for i in lbls]))
+print()
+print("Guess:", gues)
+print("Class: ", *np.array([class_names[i] for i in gues]))
+
+images = X_test.index_select(0,torch.tensor(nextrow))
+im = make_grid(images, nrow = r)
+plt.figure(figsize = (8,4))
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
