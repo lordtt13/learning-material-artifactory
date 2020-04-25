@@ -48,3 +48,36 @@ print('Class: ', *np.array([class_names[i] for i in labels]))
 im = make_grid(images, nrow = 5)  # the default nrow is 8
 plt.figure(figsize = (10,4))
 plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+# Model add
+
+class ConvolutionalNetwork(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 6, 3, 1)  # changed from (1, 6, 5, 1)
+        self.conv2 = nn.Conv2d(6, 16, 3, 1)
+        self.fc1 = nn.Linear(6*6*16, 120)   # changed from (4*4*16) to fit 32x32 images with 3x3 filters
+        self.fc2 = nn.Linear(120,84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, X):
+        X = F.relu(self.conv1(X))
+        X = F.max_pool2d(X, 2, 2)
+        X = F.relu(self.conv2(X))
+        X = F.max_pool2d(X, 2, 2)
+        X = X.view(-1, 6*6*16)
+        X = F.relu(self.fc1(X))
+        X = F.relu(self.fc2(X))
+        X = self.fc3(X)
+        return F.log_softmax(X, dim = 1)
+    
+model = ConvolutionalNetwork()
+model
+
+def count_parameters(model):
+    params = [p.numel() for p in model.parameters() if p.requires_grad]
+    for item in params:
+        print(f'{item:>6}')
+    print(f'______\n{sum(params):>6}')
+    
+count_parameters(model)
