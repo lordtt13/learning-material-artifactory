@@ -220,3 +220,29 @@ images = X_test.index_select(0,torch.tensor(nextrow))
 im = make_grid(images, nrow = r)
 plt.figure(figsize = (8,4))
 plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+# Instantiate the model and load saved parameters
+model2 = ConvolutionalNetwork()
+model2.load_state_dict(torch.load('CIFAR10-CNN-Model-master.pt'))
+model2.eval()
+
+# Evaluate the saved model against the test set
+test_load_all = DataLoader(test_data, batch_size = 10000, shuffle = False)
+
+with torch.no_grad():
+    correct = 0
+    for X_test, y_test in test_load_all:
+        y_val = model2(X_test)
+        predicted = torch.max(y_val,1)[1]
+        correct += (predicted == y_test).sum()
+        
+print(f'Test accuracy: {correct.item()}/{len(test_data)} = {correct.item()*100/(len(test_data)):7.3f}%')
+
+# Display the confusion matrix as a heatmap
+arr = confusion_matrix(y_test.view(-1), predicted.view(-1))
+df_cm = pd.DataFrame(arr, class_names, class_names)
+plt.figure(figsize = (9,6))
+sn.heatmap(df_cm, annot = True, fmt = "d", cmap = 'BuGn')
+plt.xlabel("prediction")
+plt.ylabel("label (ground truth)")
+plt.show()
