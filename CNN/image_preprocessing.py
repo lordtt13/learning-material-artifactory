@@ -194,3 +194,15 @@ im = transform(dog)
 print(im.shape)
 plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
 
+# Inverse Transformation
+
+inv_normalize = transforms.Normalize(
+    mean = [-0.485/0.229, -0.456/0.224, -0.406/0.225],
+    std = [1/0.229, 1/0.224, 1/0.225]
+)
+im_inv = inv_normalize(im)
+plt.figure(figsize = (12,4))
+plt.imshow(np.transpose(im_inv.numpy(), (1, 2, 0)))
+
+plt.figure(figsize = (12,4))
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
