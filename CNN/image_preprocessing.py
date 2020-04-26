@@ -102,3 +102,26 @@ plt.imshow(small_dog)
 im = transform(small_dog)
 print(im.shape)
 plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+"""
+transforms.CenterCrop(size)
+If size is an integer instead of sequence like (h, w), a square crop of (size, size) is made.
+"""
+
+transform = transforms.Compose([
+    transforms.CenterCrop(224), 
+    transforms.ToTensor()
+])
+im = transform(dog) # this crops the original image
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+transform = transforms.Compose([
+    transforms.Resize(224),
+    transforms.CenterCrop(224), 
+    transforms.ToTensor()
+])
+im = transform(dog)
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
