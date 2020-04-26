@@ -162,3 +162,35 @@ transform = transforms.Compose([
 im = transform(dog)
 print(im.shape)
 plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+# Pipeline the whole thing
+
+transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(p = 1),  # normally we'd set p=0.5
+    transforms.RandomRotation(30),
+    transforms.Resize(224),
+    transforms.CenterCrop(224), 
+    transforms.ToTensor()
+])
+im = transform(dog)
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+"""
+Normalization
+Once the image has been loaded into a tensor, we can perform normalization on it. This serves to make convergence happen quicker during training. The values are somewhat arbitrary - you can use a mean of 0.5 and a standard deviation of 0.5 to convert a range of [0,1] to [-1,1], for example.
+However, research has shown that mean = [0.485, 0.456, 0.406] and std = [0.229, 0.224, 0.225] work well in practice.
+
+transforms.Normalize(mean, std)
+Given mean: (M1,...,Mn) and std: (S1,..,Sn) for n channels, this transform will normalize each channel of the input tensor
+"""
+
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406],
+                         [0.229, 0.224, 0.225])
+])
+im = transform(dog)
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
