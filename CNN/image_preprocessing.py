@@ -125,3 +125,40 @@ im = transform(dog)
 print(im.shape)
 plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
 
+"""
+Other affine transformations
+An affine transformation is one that preserves points and straight lines. Examples include rotation, reflection, and scaling. For instance, we can double the effective size of our training set simply by flipping the images.
+
+transforms.RandomHorizontalFlip(p = 0.5)
+Horizontally flip the given PIL image randomly with a given probability.
+"""
+
+transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(p = 1),
+    transforms.ToTensor()
+])
+im = transform(dog)
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+"""
+transforms.RandomRotation(degrees)
+If degrees is a number instead of sequence like (min, max), the range of degrees will be (-degrees, +degrees).
+Run the cell below several times to see a sample of rotations.
+"""
+
+transform = transforms.Compose([
+    transforms.RandomRotation(30),  # rotate randomly between +/- 30 degrees
+    transforms.ToTensor()
+])
+im = transform(dog)
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+transform = transforms.Compose([
+    transforms.Resize((224,224)),  
+    transforms.ToTensor()
+])
+im = transform(dog)
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
