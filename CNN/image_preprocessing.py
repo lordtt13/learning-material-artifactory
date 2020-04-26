@@ -59,3 +59,46 @@ df[0].describe()
 
 # Run summary statistics on image heights
 df[1].describe()
+
+# Image Transformations
+
+dog = Image.open('..\\Data\\CATS_DOGS\\train\\DOG\\14.jpg')
+print(dog.size)
+plt.imshow(dog)
+
+r, g, b = dog.getpixel((0, 0))
+print(r,g,b)
+
+"""
+transforms.ToTensor()
+Converts a PIL Image or numpy.ndarray (HxWxC) in the range [0, 255] to a torch.FloatTensor of shape (CxHxW) in the range [0.0, 1.0]
+"""
+
+transform = transforms.Compose([
+    transforms.ToTensor()
+])
+im = transform(dog)
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+"""
+transforms.Resize(size)
+If size is a sequence like (h, w), the output size will be matched to this. If size is an integer, the smaller edge of the image will be matched to this number.
+i.e, if height > width, then the image will be rescaled to (size * height / width, size)
+"""
+
+transform = transforms.Compose([
+    transforms.Resize(224), 
+    transforms.ToTensor()
+])
+im = transform(dog)
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+small_dog = Image.open('../Data/CATS_DOGS/train/DOG/11.jpg')
+print(small_dog.size)
+plt.imshow(small_dog)
+
+im = transform(small_dog)
+print(im.shape)
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
