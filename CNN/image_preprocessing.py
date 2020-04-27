@@ -7,18 +7,13 @@ Created on Mon Apr 27 02:26:28 2020
 """
 
 import os
-import torch
 import warnings
 
 import numpy as np
 import pandas as pd
-import torch.nn as nn
-import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 from PIL import Image
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
 
 
 warnings.filterwarnings("ignore")
