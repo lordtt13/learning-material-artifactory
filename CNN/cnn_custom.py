@@ -82,3 +82,38 @@ im_inv = inv_normalize(im)
 # Print the images
 plt.figure(figsize = (12,4))
 plt.imshow(np.transpose(im_inv.numpy(), (1, 2, 0)))
+
+# Model add
+
+class ConvolutionalNetwork(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 6, 3, 1)
+        self.conv2 = nn.Conv2d(6, 16, 3, 1)
+        self.fc1 = nn.Linear(54*54*16, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 2)
+
+    def forward(self, X):
+        X = F.relu(self.conv1(X))
+        X = F.max_pool2d(X, 2, 2)
+        X = F.relu(self.conv2(X))
+        X = F.max_pool2d(X, 2, 2)
+        X = X.view(-1, 54*54*16)
+        X = F.relu(self.fc1(X))
+        X = F.relu(self.fc2(X))
+        X = self.fc3(X)
+        return F.log_softmax(X, dim = 1)
+    
+CNNmodel = ConvolutionalNetwork()
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(CNNmodel.parameters(), lr = 0.001)
+CNNmodel
+
+def count_parameters(model):
+    params = [p.numel() for p in model.parameters() if p.requires_grad]
+    for item in params:
+        print(f'{item:>8}')
+    print(f'________\n{sum(params):>8}')
+    
+count_parameters(CNNmodel)

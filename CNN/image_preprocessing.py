@@ -14,6 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from PIL import Image
+from torchvision import transforms
 
 
 warnings.filterwarnings("ignore")
