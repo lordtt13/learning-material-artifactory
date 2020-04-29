@@ -54,3 +54,14 @@ plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
 
 ##  If a 28x28 image is passed through a Convolutional layer using a 5x5 filter, a step size of 1, and no padding, what is the resulting matrix size?
 
+conv = nn.Conv2d(1, 1, 5, 1)
+for x,labels in train_loader:
+    print('Orig size:', x.shape)
+    break
+x = conv(x)
+print('Down size:', x.shape)
+
+## If the sample from question 3 is then passed through a 2x2 MaxPooling layer, what is the resulting matrix size?
+
+x = F.max_pool2d(x, 2, 2)
+print('Down size:', x.shape)
