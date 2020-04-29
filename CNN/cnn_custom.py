@@ -206,3 +206,27 @@ plt.show()
 
 print(test_correct)
 print(f'Test accuracy: {test_correct[-1].item()*100/3000:.3f}%')
+
+# Get Pretrained Model
+
+AlexNetmodel = models.alexnet(pretrained = True)
+AlexNetmodel
+
+# Freeze weights
+
+for param in AlexNetmodel.parameters():
+    param.requires_grad = False
+
+# Add top
+    
+AlexNetmodel.classifier = nn.Sequential(nn.Linear(9216, 1024),
+                                 nn.ReLU(),
+                                 nn.Dropout(0.4),
+                                 nn.Linear(1024, 2),
+                                 nn.LogSoftmax(dim = 1))
+AlexNetmodel
+
+# These are the TRAINABLE parameters:
+count_parameters(AlexNetmodel)
+
+criterion = nn.CrossEntropyLoss()
