@@ -299,3 +299,20 @@ print(f'\nDuration: {time.time() - start_time:.0f} seconds')
 print(test_correct)
 print(f'Test accuracy: {test_correct[-1].item()*100/3000:.3f}%')
 
+# Evaluate on custom image on both models
+
+x = 2019
+im = inv_normalize(test_data[x][0])
+plt.imshow(np.transpose(im.numpy(), (1, 2, 0)))
+
+test_data[x][0].shape
+
+CNNmodel.eval()
+with torch.no_grad():
+    new_pred = CNNmodel(test_data[x][0].view(1,3,224,224)).argmax()
+print(f'Predicted value: {new_pred.item()} {class_names[new_pred.item()]}')
+
+AlexNetmodel.eval()
+with torch.no_grad():
+    new_pred = AlexNetmodel(test_data[x][0].view(1,3,224,224)).argmax()
+print(f'Predicted value: {new_pred.item()} {class_names[new_pred.item()]}')
