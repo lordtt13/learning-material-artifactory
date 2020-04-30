@@ -6,11 +6,9 @@ Created on Thu Apr 30 01:38:10 2020
 @author: tanmay
 """
 
-import time
 import torch
 
 import numpy as np
-import pandas as pd
 import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
@@ -98,3 +96,34 @@ count_parameters(model)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = 0.001)
+
+# Train
+
+epochs = 5
+
+for i in range(epochs):
+    for X_train, y_train in train_loader:
+
+        # Apply the model
+        y_pred = model(X_train)
+        loss = criterion(y_pred, y_train)
+
+        # Update parameters
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    print(f'{i+1} of {epochs} epochs completed')
+    
+# Evaluate
+    
+model.eval()
+
+with torch.no_grad():
+    correct = 0
+    for X_test, y_test in test_loader:
+        y_val = model(X_test)
+        predicted = torch.max(y_val,1)[1]
+        correct += (predicted == y_test).sum()
+        
+print(f'Test accuracy: {correct.item()}/{len(test_data)} = {correct.item()*100/(len(test_data)):7.3f}%')
