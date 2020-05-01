@@ -4,6 +4,7 @@
 # Datasets Skipped
 *.csv
 *.txt
+DCGAN Celebrity Faces/input
 
 # Models Skipped
 *.h5
