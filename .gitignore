@@ -13,4 +13,6 @@ DCGAN Celebrity Faces/input
 
 # Binaries Skipped
 *.p
+ckpt*
+checkpoint
 TV Script Generation/training_checkpoints/
