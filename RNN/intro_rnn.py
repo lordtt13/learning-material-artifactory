@@ -6,6 +6,7 @@ Created on Sun May  3 06:23:48 2020
 @author: tanmay
 """
 
+import time
 import torch
 
 import numpy as np
@@ -137,3 +138,54 @@ for i in range(epochs):
     plt.plot(y.numpy())
     plt.plot(range(760,800),preds[window_size:])
     plt.show()
+    
+# Take entire dataset
+    
+epochs = 10
+window_size = 40
+future = 40
+
+# Create the full set of sequence/label tuples:
+all_data = input_data(y,window_size)
+len(all_data)
+
+start_time = time.time()
+
+for i in range(epochs):
+    
+    # tuple-unpack the entire set of data
+    for seq, y_train in all_data:  
+       
+        # reset the parameters and hidden states
+        optimizer.zero_grad()
+        model.hidden = (torch.zeros(1,1,model.hidden_size),
+                        torch.zeros(1,1,model.hidden_size))
+        
+        y_pred = model(seq)
+        
+        loss = criterion(y_pred, y_train)
+        
+        loss.backward()
+        optimizer.step()
+        
+    # print training result
+    print(f'Epoch: {i+1:2} Loss: {loss.item():10.8f}')
+    
+print(f'\nDuration: {time.time() - start_time:.0f} seconds')
+
+preds = y[-window_size:].tolist()
+
+for i in range(future):  
+    seq = torch.FloatTensor(preds[-window_size:])
+    with torch.no_grad():
+        # Reset the hidden parameters
+        model.hidden = (torch.zeros(1,1,model.hidden_size),
+                        torch.zeros(1,1,model.hidden_size))  
+        preds.append(model(seq).item())
+
+plt.figure(figsize = (12,4))
+plt.xlim(-10,841)
+plt.grid(True)
+plt.plot(y.numpy())
+plt.plot(range(800,800+future),preds[window_size:])
+plt.show()
