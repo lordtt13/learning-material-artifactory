@@ -14,6 +14,8 @@ import pandas as pd
 import torch.nn as nn
 import matplotlib.pyplot as plt
 
+from sklearn.preprocessing import MinMaxScaler
+
 
 df = pd.read_csv('Data/TimeSeriesData/Alcohol_Sales.csv',index_col = 0,parse_dates = True)
 len(df)
@@ -42,3 +44,27 @@ test_size = 12
 # Create train and test sets
 train_set = y[:-test_size]
 test_set = y[-test_size:]
+
+scaler = MinMaxScaler(feature_range = (-1, 1))
+
+train_norm = scaler.fit_transform(train_set.reshape(-1, 1))
+
+# Convert train_norm from an array to a tensor
+train_norm = torch.FloatTensor(train_norm).view(-1)
+
+# Define a window size
+window_size = 12
+
+# Define function to create seq/label tuples
+def input_data(seq,ws):  # ws is the window size
+    out = []
+    L = len(seq)
+    for i in range(L-ws):
+        window = seq[i:i+ws]
+        label = seq[i+ws:i+ws+1]
+        out.append((window,label))
+    return out
+
+# Apply the input_data function to train_norm
+train_data = input_data(train_norm,window_size)
+len(train_data)  # this should equal 325-12-12
