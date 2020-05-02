@@ -9,8 +9,6 @@ Created on Sun May  3 06:23:48 2020
 import time
 import torch
 
-import numpy as np
-import pandas as pd
 import torch.nn as nn
 import matplotlib.pyplot as plt
 
