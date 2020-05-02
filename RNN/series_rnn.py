@@ -68,3 +68,41 @@ def input_data(seq,ws):  # ws is the window size
 # Apply the input_data function to train_norm
 train_data = input_data(train_norm,window_size)
 len(train_data)  # this should equal 325-12-12
+
+# Define the model
+
+class LSTMnetwork(nn.Module):
+    def __init__(self,input_size=1,hidden_size=100,output_size=1):
+        super().__init__()
+        self.hidden_size = hidden_size
+        
+        # Add an LSTM layer:
+        self.lstm = nn.LSTM(input_size,hidden_size)
+        
+        # Add a fully-connected layer:
+        self.linear = nn.Linear(hidden_size,output_size)
+        
+        # Initialize h0 and c0:
+        self.hidden = (torch.zeros(1,1,self.hidden_size),
+                       torch.zeros(1,1,self.hidden_size))
+
+    def forward(self,seq):
+        lstm_out, self.hidden = self.lstm(
+            seq.view(len(seq),1,-1), self.hidden)
+        pred = self.linear(lstm_out.view(len(seq),-1))
+        return pred[-1]
+    
+model = LSTMnetwork()
+
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr = 0.001)
+
+model
+
+def count_parameters(model):
+    params = [p.numel() for p in model.parameters() if p.requires_grad]
+    for item in params:
+        print(f'{item:>6}')
+    print(f'______\n{sum(params):>6}')
+    
+count_parameters(model)
