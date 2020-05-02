@@ -106,3 +106,74 @@ def count_parameters(model):
     print(f'______\n{sum(params):>6}')
     
 count_parameters(model)
+
+epochs = 100
+
+start_time = time.time()
+
+for epoch in range(epochs):
+    
+    # extract the sequence & label from the training data
+    for seq, y_train in train_data:
+        
+        # reset the parameters and hidden states
+        optimizer.zero_grad()
+        model.hidden = (torch.zeros(1,1,model.hidden_size),
+                        torch.zeros(1,1,model.hidden_size))
+        
+        y_pred = model(seq)
+        
+        loss = criterion(y_pred, y_train)
+        loss.backward()
+        optimizer.step()
+        
+    # print training result
+    print(f'Epoch: {epoch+1:2} Loss: {loss.item():10.8f}')
+    
+print(f'\nDuration: {time.time() - start_time:.0f} seconds')
+
+future = 12
+
+# Add the last window of training values to the list of predictions
+preds = train_norm[-window_size:].tolist()
+
+# Set the model to evaluation mode
+model.eval()
+
+for i in range(future):
+    seq = torch.FloatTensor(preds[-window_size:])
+    with torch.no_grad():
+        model.hidden = (torch.zeros(1,1,model.hidden_size),
+                        torch.zeros(1,1,model.hidden_size))
+        preds.append(model(seq).item())
+        
+# Invert Normalization
+        
+true_predictions = scaler.inverse_transform(np.array(preds[window_size:]).reshape(-1, 1))
+true_predictions, df['S4248SM144NCEN'][-12:]
+
+# Plot the results
+
+x = np.arange('2018-02-01', '2019-02-01', dtype='datetime64[M]').astype('datetime64[D]')
+
+plt.figure(figsize = (12,4))
+plt.title('Beer, Wine, and Alcohol Sales')
+plt.ylabel('Sales (millions of dollars)')
+plt.grid(True)
+plt.autoscale(axis = 'x',tight = True)
+plt.plot(df['S4248SM144NCEN'])
+plt.plot(x,true_predictions)
+plt.show()
+
+# Plot the end of the graph
+fig = plt.figure(figsize = (12,4))
+plt.title('Beer, Wine, and Alcohol Sales')
+plt.ylabel('Sales (millions of dollars)')
+plt.grid(True)
+plt.autoscale(axis = 'x',tight = True)
+fig.autofmt_xdate()
+
+# Select the end of the graph with slice notation:
+plt.plot(df['S4248SM144NCEN']['2017-01-01':])
+plt.plot(x,true_predictions)
+plt.show()
