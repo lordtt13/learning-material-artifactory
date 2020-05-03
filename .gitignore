@@ -5,6 +5,7 @@
 *.csv
 *.txt
 DCGAN Celebrity Faces/input
+DCGAN Celebrity Faces/images
 
 # Models Skipped
 *.h5
