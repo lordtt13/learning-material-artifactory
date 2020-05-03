@@ -54,3 +54,86 @@ train_data[0]
 
 torch.set_printoptions(sci_mode = False) # to improve the appearance of tensors
 train_data[0]
+
+# Create LSTM Model
+
+class LSTM(nn.Module):
+    def __init__(self, input_size = 1, hidden_size = 50, out_size = 1):
+        super().__init__()
+        self.hidden_size = hidden_size
+        
+        # Add an LSTM layer:
+        self.lstm = nn.LSTM(input_size,hidden_size)
+        
+        # Add a fully-connected layer:
+        self.linear = nn.Linear(hidden_size,out_size)
+        
+        # Initialize h0 and c0:
+        self.hidden = (torch.zeros(1,1,hidden_size),
+                       torch.zeros(1,1,hidden_size))
+    
+    def forward(self,seq):
+        lstm_out, self.hidden = self.lstm(
+            seq.view(len(seq), 1, -1), self.hidden)
+        pred = self.linear(lstm_out.view(len(seq),-1))
+        return pred[-1]
+    
+model = LSTM()
+criterion = nn.MSELoss()
+optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
+
+model
+
+def count_parameters(model):
+    params = [p.numel() for p in model.parameters() if p.requires_grad]
+    for item in params:
+        print(f'{item:>6}')
+    print(f'______\n{sum(params):>6}')
+    
+count_parameters(model)
+
+# Train and Evaluate every epoch
+
+epochs = 10
+future = 40
+
+for i in range(epochs):
+    
+    # tuple-unpack the train_data set
+    for seq, y_train in train_data:
+        
+        # reset the parameters and hidden states
+        optimizer.zero_grad()
+        model.hidden = (torch.zeros(1,1,model.hidden_size),
+                        torch.zeros(1,1,model.hidden_size))
+        
+        y_pred = model(seq)
+        
+        loss = criterion(y_pred, y_train)
+        loss.backward()
+        optimizer.step()
+        
+    # print training result
+    print(f'Epoch: {i+1:2} Loss: {loss.item():10.8f}')
+    
+    # MAKE PREDICTIONS
+    # start with a list of the last 10 training records
+    preds = train_set[-window_size:].tolist()
+
+    for f in range(future):  
+        seq = torch.FloatTensor(preds[-window_size:])
+        with torch.no_grad():
+            model.hidden = (torch.zeros(1,1,model.hidden_size),
+                            torch.zeros(1,1,model.hidden_size))
+            preds.append(model(seq).item())
+            
+    loss = criterion(torch.tensor(preds[-window_size:]),y[760:])
+    print(f'Loss on test predictions: {loss}')
+
+    # Plot from point 700 to the end
+    plt.figure(figsize = (12,4))
+    plt.xlim(700,801)
+    plt.grid(True)
+    plt.plot(y.numpy())
+    plt.plot(range(760,800),preds[window_size:])
+    plt.show()
