@@ -6,7 +6,6 @@ Created on Tue May  5 06:40:58 2020
 @author: tanmay
 """
 
-import time
 import torch
 
 import torch.nn as nn
@@ -144,3 +143,26 @@ preds[window_size:]
 
 true_predictions = scaler.inverse_transform(np.array(preds[window_size:]).reshape(-1, 1))
 true_predictions
+
+# Plot Predictions
+
+x = np.arange('2018-02-01', '2019-02-01', dtype = 'datetime64[M]').astype('datetime64[D]')
+
+plt.figure(figsize = (12,4))
+plt.title('Industrial Production Index for Electricity and Gas Utilities')
+plt.ylabel('Index 2012 = 100, Not Seasonally Adjusted')
+plt.grid(True)
+plt.autoscale(axis = 'x',tight = True)
+plt.plot(df['IPG2211A2N'])
+plt.plot(x,true_predictions)
+plt.show()
+
+fig = plt.figure(figsize = (12,4))
+plt.title('Industrial Production Index for Electricity and Gas Utilities')
+plt.ylabel('Index 2012 = 100, Not Seasonally Adjusted')
+plt.grid(True)
+plt.autoscale(axis = 'x',tight = True)
+fig.autofmt_xdate()
+plt.plot(df['IPG2211A2N']['2017-01-01':])
+plt.plot(x,true_predictions)
+plt.show()
