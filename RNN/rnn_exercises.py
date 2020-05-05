@@ -103,3 +103,44 @@ model
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = 0.001)
 
+# Train loop
+
+epochs = 50
+
+for i in range(epochs):
+    for seq, y_train in train_data:
+        
+        # reset the parameters and hidden states
+        optimizer.zero_grad()
+        model.hidden = (torch.zeros(1,1,model.hidden_size),
+                        torch.zeros(1,1,model.hidden_size))
+        
+        # apply the model
+        y_pred = model(seq)
+
+        # update parameters
+        loss = criterion(y_pred, y_train)
+        loss.backward()
+        optimizer.step()
+
+    # OPTIONAL print statement
+    print(f'{i+1} of {epochs} epochs completed')
+    
+# Evaluate
+    
+future = 12
+preds = train_norm[-window_size:].tolist()
+
+model.eval()
+
+for i in range(future):
+    seq = torch.FloatTensor(preds[-window_size:])
+    with torch.no_grad():
+        model.hidden = (torch.zeros(1,1,model.hidden_size),
+                        torch.zeros(1,1,model.hidden_size))
+        preds.append(model(seq).item())
+        
+preds[window_size:]
+
+true_predictions = scaler.inverse_transform(np.array(preds[window_size:]).reshape(-1, 1))
+true_predictions
