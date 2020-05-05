@@ -35,3 +35,41 @@ plt.autoscale(axis = 'x',tight = True)
 plt.plot(df['IPG2211A2N'])
 plt.show()
 
+# Preprocess
+
+y = df['IPG2211A2N'].values.astype(float)
+
+test_size = 12
+window_size = 12
+
+train_set = y[:-test_size]
+test_set = y[-test_size:]
+
+print(f'Train: {len(train_set)}')
+print(f'Test:  {len(test_set)}')
+
+# Normalize the dataset
+
+scaler = MinMaxScaler(feature_range = (-1, 1))
+
+train_norm = scaler.fit_transform(train_set.reshape(-1, 1))
+
+print(f'First item, original: {train_set[0]}')
+print(f'First item, scaled: {train_norm[0]}')
+
+# Prepare time series data
+
+train_norm = torch.FloatTensor(train_norm).view(-1)
+
+def input_data(seq,ws):
+    out = []
+    L = len(seq)
+    for i in range(L-ws):
+        window = seq[i:i+ws]
+        label = seq[i+ws:i+ws+1]
+        out.append((window,label))
+    return out
+
+train_data = input_data(train_norm,window_size)
+
+print(f'Train_data: {len(train_data)}')
