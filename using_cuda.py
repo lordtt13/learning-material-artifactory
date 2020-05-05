@@ -22,3 +22,17 @@ torch.cuda.memory_allocated()
 # Returns the current GPU memory managed by the
 # caching allocator in bytes for a given device
 torch.cuda.memory_cached()
+
+# Using CUDA instead of CPU
+
+a = torch.FloatTensor([1.,2.])
+
+a.device
+
+# GPU
+a = torch.FloatTensor([1., 2.]).cuda()
+
+a.device
+
+torch.cuda.memory_allocated()
+
