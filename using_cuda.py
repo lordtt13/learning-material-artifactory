@@ -6,6 +6,7 @@ Created on Tue May  5 07:02:06 2020
 @author: tanmay
 """
 
+import time
 import torch
 
 import pandas as pd
@@ -84,3 +85,25 @@ y_test = torch.LongTensor(y_test).cuda()
 
 trainloader = DataLoader(X_train, batch_size = 60, shuffle = True)
 testloader = DataLoader(X_test, batch_size = 60, shuffle = False)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr = 0.01)
+
+epochs = 100
+losses = []
+start = time.time()
+for i in range(epochs):
+    i+=1
+    y_pred = gpumodel.forward(X_train)
+    loss = criterion(y_pred, y_train)
+    losses.append(loss)
+    
+    # a neat trick to save screen space:
+    if i%10 == 1:
+        print(f'epoch: {i:2}  loss: {loss.item():10.8f}')
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    
+print(f'TOTAL TRAINING TIME: {time.time()-start}')
