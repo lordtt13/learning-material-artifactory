@@ -363,3 +363,104 @@ model = CharModel(
 model.load_state_dict(torch.load(model_name))
 model.eval()
 
+
+def predict_next_char(model, char, hidden = None, k = 1):
+        
+        # Encode raw letters with model
+        encoded_text = model.encoder[char]
+        
+        # set as numpy array for one hot encoding
+        # NOTE THE [[ ]] dimensions!!
+        encoded_text = np.array([[encoded_text]])
+        
+        # One hot encoding
+        encoded_text = one_hot_encoder(encoded_text, len(model.all_chars))
+        
+        # Convert to Tensor
+        inputs = torch.from_numpy(encoded_text)
+        
+        # Check for CPU
+        if(model.use_gpu):
+            inputs = inputs.cuda()
+        
+        
+        # Grab hidden states
+        hidden = tuple([state.data for state in hidden])
+        
+        
+        # Run model and get predicted output
+        lstm_out, hidden = model(inputs, hidden)
+
+        
+        # Convert lstm_out to probabilities
+        probs = F.softmax(lstm_out, dim=1).data
+        
+        
+        
+        if(model.use_gpu):
+            # move back to CPU to use with numpy
+            probs = probs.cpu()
+        
+        
+        # k determines how many characters to consider
+        # for our probability choice.
+        # https://pytorch.org/docs/stable/torch.html#torch.topk
+        
+        # Return k largest probabilities in tensor
+        probs, index_positions = probs.topk(k)
+        
+        
+        index_positions = index_positions.numpy().squeeze()
+        
+        # Create array of probabilities
+        probs = probs.numpy().flatten()
+        
+        # Convert to probabilities per index
+        probs = probs/probs.sum()
+        
+        # randomly choose a character based on probabilities
+        char = np.random.choice(index_positions, p=probs)
+       
+        # return the encoded value of the predicted char and the hidden state
+        return model.decoder[char], hidden
+    
+    
+def generate_text(model, size, seed = 'The', k = 1):
+        
+    # CHECK FOR GPU
+    if(model.use_gpu):
+        model.cuda()
+    else:
+        model.cpu()
+    
+    # Evaluation mode
+    model.eval()
+    
+    # begin output from initial seed
+    output_chars = [c for c in seed]
+    
+    # intiate hidden state
+    hidden = model.hidden_state(1)
+    
+    # predict the next character for every character in seed
+    for char in seed:
+        char, hidden = predict_next_char(model, char, hidden, k=k)
+    
+    # add initial characters to output
+    output_chars.append(char)
+    
+    # Now generate for size requested
+    for i in range(size):
+        
+        # predict based off very last letter in output_chars
+        char, hidden = predict_next_char(model, output_chars[-1], hidden, k=k)
+        
+        # add predicted character
+        output_chars.append(char)
+    
+    # return string of predicted text
+    return ''.join(output_chars)
+
+
+# Generate preds
+print(generate_text(model, 1000, seed = 'The ', k = 3))
