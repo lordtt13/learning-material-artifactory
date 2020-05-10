@@ -248,3 +248,99 @@ tracker = 0
 # number of characters in text
 num_char = max(encoded_text)+1
 
+# Training Add
+
+# Set model to train
+model.train()
+
+
+# Check to see if using GPU
+if model.use_gpu:
+    model.cuda()
+
+for i in range(epochs):
+    
+    hidden = model.hidden_state(batch_size)
+    
+    
+    for x,y in generate_batches(train_data,batch_size,seq_len):
+        
+        tracker += 1
+        
+        # One Hot Encode incoming data
+        x = one_hot_encoder(x,num_char)
+        
+        # Convert Numpy Arrays to Tensor
+        
+        inputs = torch.from_numpy(x)
+        targets = torch.from_numpy(y)
+        
+        # Adjust for GPU if necessary
+        
+        if model.use_gpu:
+            
+            inputs = inputs.cuda()
+            targets = targets.cuda()
+            
+        # Reset Hidden State
+        # If we dont' reset we would backpropagate through all training history
+        hidden = tuple([state.data for state in hidden])
+        
+        model.zero_grad()
+        
+        lstm_output, hidden = model.forward(inputs,hidden)
+        loss = criterion(lstm_output,targets.view(batch_size*seq_len).long())
+        
+        loss.backward()
+        
+        # POSSIBLE EXPLODING GRADIENT PROBLEM!
+        # LET"S CLIP JUST IN CASE
+        nn.utils.clip_grad_norm_(model.parameters(), max_norm = 5)
+        
+        optimizer.step()
+        
+        
+        
+        ###################################
+        ### CHECK ON VALIDATION SET ######
+        #################################
+        
+        if tracker % 25 == 0:
+            
+            val_hidden = model.hidden_state(batch_size)
+            val_losses = []
+            model.eval()
+            
+            for x,y in generate_batches(val_data,batch_size,seq_len):
+                
+                # One Hot Encode incoming data
+                x = one_hot_encoder(x,num_char)
+                
+
+                # Convert Numpy Arrays to Tensor
+
+                inputs = torch.from_numpy(x)
+                targets = torch.from_numpy(y)
+
+                # Adjust for GPU if necessary
+
+                if model.use_gpu:
+
+                    inputs = inputs.cuda()
+                    targets = targets.cuda()
+                    
+                # Reset Hidden State
+                # If we dont' reset we would backpropagate through 
+                # all training history
+                val_hidden = tuple([state.data for state in val_hidden])
+                
+                lstm_output, val_hidden = model.forward(inputs,val_hidden)
+                val_loss = criterion(lstm_output,targets.view(batch_size*seq_len).long())
+        
+                val_losses.append(val_loss.item())
+            
+            # Reset to training model after val for loop
+            model.train()
+            
+            print(f"Epoch: {i} Step: {tracker} Val Loss: {val_loss.item()}")
+
