@@ -139,3 +139,60 @@ print(x, y)
 # GPU Check
 torch.cuda.is_available()
 
+# Model Definition
+
+class CharModel(nn.Module):
+    
+    def __init__(self, all_chars, num_hidden = 256, num_layers = 4, drop_prob = 0.5, use_gpu = False):
+        
+        # SET UP ATTRIBUTES
+        super().__init__()
+        self.drop_prob = drop_prob
+        self.num_layers = num_layers
+        self.num_hidden = num_hidden
+        self.use_gpu = use_gpu
+        
+        #CHARACTER SET, ENCODER, and DECODER
+        self.all_chars = all_chars
+        self.decoder = dict(enumerate(all_chars))
+        self.encoder = {char: ind for ind,char in decoder.items()}
+        
+        
+        self.lstm = nn.LSTM(len(self.all_chars), num_hidden, num_layers, dropout = drop_prob, batch_first = True)
+        
+        self.dropout = nn.Dropout(drop_prob)
+        
+        self.fc_linear = nn.Linear(num_hidden, len(self.all_chars))
+      
+    
+    def forward(self, x, hidden):
+                  
+        lstm_output, hidden = self.lstm(x, hidden)
+        
+        
+        drop_output = self.dropout(lstm_output)
+        
+        drop_output = drop_output.contiguous().view(-1, self.num_hidden)
+        
+        
+        final_out = self.fc_linear(drop_output)
+        
+        
+        return final_out, hidden
+    
+    
+    def hidden_state(self, batch_size):
+        '''
+        Used as separate method to account for both GPU and CPU users.
+        '''
+        
+        if self.use_gpu:
+            
+            hidden = (torch.zeros(self.num_layers,batch_size,self.num_hidden).cuda(),
+                     torch.zeros(self.num_layers,batch_size,self.num_hidden).cuda())
+        else:
+            hidden = (torch.zeros(self.num_layers,batch_size,self.num_hidden),
+                     torch.zeros(self.num_layers,batch_size,self.num_hidden))
+        
+        return hidden
+    
