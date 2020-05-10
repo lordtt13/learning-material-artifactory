@@ -231,3 +231,20 @@ train_ind = int(len(encoded_text) * (train_percent))
 train_data = encoded_text[:train_ind]
 val_data = encoded_text[train_ind:]
 
+# Params
+
+# Epochs to train for
+epochs = 50
+# batch size 
+batch_size = 128
+
+# Length of sequence
+seq_len = 100
+
+# for printing report purposes
+# always start at 0
+tracker = 0
+
+# number of characters in text
+num_char = max(encoded_text)+1
+
