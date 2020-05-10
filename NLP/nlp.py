@@ -218,3 +218,16 @@ len(encoded_text)
 optimizer = torch.optim.Adam(model.parameters(),lr = 0.001)
 criterion = nn.CrossEntropyLoss()
 
+# Training Data and Validation Data
+# percentage of data to be used for training
+train_percent = 0.1
+
+len(encoded_text)
+
+int(len(encoded_text) * (train_percent))
+
+train_ind = int(len(encoded_text) * (train_percent))
+
+train_data = encoded_text[:train_ind]
+val_data = encoded_text[train_ind:]
+
