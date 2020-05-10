@@ -124,3 +124,18 @@ def generate_batches(encoded_text, samp_per_batch = 10, seq_len = 50):
             y[:, -1] = encoded_text[:, 0]
             
         yield x, y
+        
+sample_text = encoded_text[:20]
+
+sample_text
+
+batch_generator = generate_batches(sample_text, samp_per_batch = 2, seq_len = 5)
+
+# Grab first batch
+x, y = next(batch_generator)
+
+print(x, y)
+
+# GPU Check
+torch.cuda.is_available()
+
