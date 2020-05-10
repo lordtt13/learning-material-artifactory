@@ -344,3 +344,22 @@ for i in range(epochs):
             
             print(f"Epoch: {i} Step: {tracker} Val Loss: {val_loss.item()}")
 
+# Save Model
+
+model_name = 'example.net'
+
+torch.save(model.state_dict(),model_name)
+
+# Load Model
+# MUST MATCH THE EXACT SAME SETTINGS AS MODEL USED DURING TRAINING!
+
+model = CharModel(
+    all_chars = all_characters,
+    num_hidden = 512,
+    num_layers = 3,
+    drop_prob = 0.5,
+    use_gpu = True,
+)
+model.load_state_dict(torch.load(model_name))
+model.eval()
+
