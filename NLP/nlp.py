@@ -59,3 +59,68 @@ def one_hot_encoder(encoded_text, num_uni_chars):
     return one_hot
 
 one_hot_encoder(np.array([1,2,0]),3)
+
+
+def generate_batches(encoded_text, samp_per_batch = 10, seq_len = 50):
+    
+    '''
+    Generate (using yield) batches for training.
+    
+    X: Encoded Text of length seq_len
+    Y: Encoded Text shifted by one
+    
+    Example:
+    
+    X:
+    
+    [[1 2 3]]
+    
+    Y:
+    
+    [[ 2 3 4]]
+    
+    encoded_text : Complete Encoded Text to make batches from
+    batch_size : Number of samples per batch
+    seq_len : Length of character sequence
+       
+    '''
+    
+    # Total number of characters per batch
+    # Example: If samp_per_batch is 2 and seq_len is 50, then 100
+    # characters come out per batch.
+    char_per_batch = samp_per_batch * seq_len
+    
+    
+    # Number of batches available to make
+    # Use int() to roun to nearest integer
+    num_batches_avail = int(len(encoded_text)/char_per_batch)
+    
+    # Cut off end of encoded_text that
+    # won't fit evenly into a batch
+    encoded_text = encoded_text[:num_batches_avail * char_per_batch]
+    
+    
+    # Reshape text into rows the size of a batch
+    encoded_text = encoded_text.reshape((samp_per_batch, -1))
+    
+
+    # Go through each row in array.
+    for n in range(0, encoded_text.shape[1], seq_len):
+        
+        # Grab feature characters
+        x = encoded_text[:, n:n+seq_len]
+        
+        # y is the target shifted over by 1
+        y = np.zeros_like(x)
+       
+        #
+        try:
+            y[:, :-1] = x[:, 1:]
+            y[:, -1]  = encoded_text[:, n+seq_len]
+            
+        # FOR POTENTIAL INDEXING ERROR AT THE END    
+        except:
+            y[:, :-1] = x[:, 1:]
+            y[:, -1] = encoded_text[:, 0]
+            
+        yield x, y
