@@ -196,3 +196,25 @@ class CharModel(nn.Module):
         
         return hidden
     
+# Instantiate Model
+
+model = CharModel(
+    all_chars = all_characters,
+    num_hidden = 512,
+    num_layers = 3,
+    drop_prob = 0.5,
+    use_gpu = True,
+)
+
+total_param  = []
+for p in model.parameters():
+    total_param.append(int(p.numel()))
+    
+sum(total_param)
+
+len(encoded_text)
+
+# Optimizer and Loss
+optimizer = torch.optim.Adam(model.parameters(),lr = 0.001)
+criterion = nn.CrossEntropyLoss()
+
