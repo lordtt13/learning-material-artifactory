@@ -9,7 +9,9 @@ gen
 ./Naive Bayes/SMSSpamCollection
 ./Naive Bayes/readme
 *__pycache__
+*.ipynb_checkpoints/
 *.csv
+*.png
 /Machine Translation/data/
 /Voice to Text/LibriSpeech/
 
