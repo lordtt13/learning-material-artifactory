@@ -22,3 +22,13 @@ gen
 *ipynb_checkpoints
 *__pycache__
 *ipynb_checkpoints/
+*__pycache__
+*ipynb_checkpoints
+
+# Data Skipped
+/Data
+
+# Models Skipped
+*.pt
+*.pkl
+*.pickle
