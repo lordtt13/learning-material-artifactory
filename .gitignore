@@ -18,3 +18,5 @@ gen
 # Logs and Checkpoints
 /Machine Translation/logs/
 /Sentiment Analysis/checkpoints/
+*__pycache__
+*ipynb_checkpoints
