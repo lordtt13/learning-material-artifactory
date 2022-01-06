@@ -6,29 +6,22 @@ gen
 
 # Datasets
 *.txt
-./Naive Bayes/SMSSpamCollection
-./Naive Bayes/readme
-*__pycache__
-*.ipynb_checkpoints/
 *.csv
 *.png
-/Machine Translation/data/
-/Voice to Text/LibriSpeech/
 
 # Logs and Checkpoints
-/Machine Translation/logs/
-/Sentiment Analysis/checkpoints/
-*__pycache__
-*ipynb_checkpoints
-*__pycache__
-*ipynb_checkpoints/
 *__pycache__
 *ipynb_checkpoints
 
-# Data Skipped
-/Data
-
-# Models Skipped
+# Models
 *.pt
 *.pkl
 *.pickle
+*.h5
+*.hdf5
+*.model
+
+# Binaries
+*.p
+ckpt*
+checkpoint
