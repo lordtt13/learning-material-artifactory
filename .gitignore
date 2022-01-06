@@ -25,3 +25,4 @@ gen
 *.p
 ckpt*
 checkpoint
+*__pycache__

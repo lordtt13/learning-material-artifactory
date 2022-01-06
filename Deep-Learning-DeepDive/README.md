@@ -1,0 +1,1 @@
+Implementations of networks and methodologies mentioned in the book by Ian Goodfellow, Deep Learning implemented using JAX
